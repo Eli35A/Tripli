@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Tripli</string>
+    <string name="title_trip">Trip</string>
+    <string name="title_li">li</string>
+    <string name="login_subtitle">Explore new destinations, view real recommendations, and share your own hidden gems with the world.</string>
+    <string name="sign_in_with_google">Sign in with Google</string>
+    <string name="login_terms_full_text">By continuing, you agree to our Terms of Service and Privacy Policy.</string>
+    <string name="terms_of_service">Terms of Service</string>
+    <string name="privacy_policy">Privacy Policy</string>
+    <string name="app_icon_content_description">Tripli app icon</string>
+    <string name="post_image_content_description">Featured travel post image</string>
+    <string name="google_sign_in_cancelled">Google sign-in was cancelled.</string>
+    <string name="google_token_missing">Google sign-in did not return an ID token. Check your Firebase configuration.</string>
+    <string name="google_sign_in_failed_with_code">Google sign-in failed. Status code: %1$d</string>
+    <string name="welcome_title">You are signed in</string>
+    <string name="logout">Logout</string>
+    <string name="profile_image_content_description">Profile image</string>
+    <string name="user_saved_message">Authenticated with Google, saved in Firebase Authentication, mirrored to Firestore under the users collection, and cached locally in Room.</string>
+    <string name="email_not_available">Email not available</string>
+</resources>

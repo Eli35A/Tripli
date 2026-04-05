@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="screenBackground">#F1F4F6</color>
+    <color name="sheetBackground">#FFFFFFFF</color>
+    <color name="accentBlue">#39C4E7</color>
+    <color name="textPrimary">#101820</color>
+    <color name="textSecondary">#6A768A</color>
+    <color name="locationText">#F5F7FA</color>
+    <color name="authorText">#E8EEF4</color>
+    <color name="authorInitialText">#19323C</color>
+    <color name="googleButtonStroke">#DEE4EA</color>
+    <color name="googleButtonText">#243041</color>
+    <color name="progressTrack">#D9EDF4</color>
+    <color name="termsText">#97A0AF</color>
+    <color name="termsLink">#AAB3BF</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="launcher_background">#24C6E9</color>
+    <color name="infoCardBackground">#F7FBFD</color>
+</resources>

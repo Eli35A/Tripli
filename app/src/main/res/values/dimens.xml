@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="screen_horizontal_padding">16dp</dimen>
+    <dimen name="sheet_horizontal_padding">18dp</dimen>
+    <dimen name="post_card_spacing">14dp</dimen>
+</resources>
