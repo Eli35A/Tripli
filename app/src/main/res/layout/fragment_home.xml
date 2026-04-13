@@ -16,11 +16,14 @@
         android:orientation="horizontal"
         android:background="@color/screenBackground">
 
-        <ImageView
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:src="@drawable/ic_app_mark"
-            android:contentDescription="@null" />
+        <ImageButton
+            android:id="@+id/notificationButton"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_notification"
+            android:tint="@color/textPrimary"
+            android:contentDescription="Notifications" />
 
         <TextView
             android:layout_width="0dp"
@@ -32,14 +35,11 @@
             android:textSize="20sp"
             android:textStyle="bold" />
 
-        <ImageButton
-            android:id="@+id/notificationButton"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_notification"
-            android:tint="@color/textPrimary"
-            android:contentDescription="Notifications" />
+        <ImageView
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:src="@drawable/ic_app_mark"
+            android:contentDescription="@null" />
 
     </LinearLayout>
 
