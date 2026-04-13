@@ -185,10 +185,8 @@ class LoginFragment : Fragment() {
 
         viewModel.navigationUser.observe(viewLifecycleOwner) { user ->
             if (user == null) return@observe
-            Log.d(TAG, "observeViewModel: navigating to WelcomeFragment for user=${user.uid}")
-            val action = LoginFragmentDirections.actionLoginFragmentToWelcomeFragment(
-                uid = user.uid
-            )
+            Log.d(TAG, "observeViewModel: navigating to HomeFragment for user=${user.uid}")
+            val action = LoginFragmentDirections.actionLoginFragmentToHomeFragment()
             findNavController().navigate(action)
             viewModel.onNavigationHandled()
         }
