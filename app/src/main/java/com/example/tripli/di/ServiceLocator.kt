@@ -3,6 +3,7 @@ package com.example.tripli.di
 import android.content.Context
 import com.example.tripli.data.local.AppDatabase
 import com.example.tripli.data.repository.FeaturedPostsRepository
+import com.example.tripli.data.repository.HomePostRepository
 import com.example.tripli.data.repository.UserRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -31,5 +32,9 @@ object ServiceLocator {
 
     fun provideFeaturedPostsRepository(): FeaturedPostsRepository {
         return FeaturedPostsRepository()
+    }
+
+    fun provideHomePostRepository(): HomePostRepository {
+        return HomePostRepository()
     }
 }
