@@ -4,14 +4,29 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
 import com.example.tripli.data.model.Comment
 import com.example.tripli.data.model.HomePost
 import com.example.tripli.data.repository.HomePostRepository
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class HomeViewModel(private val repository: HomePostRepository) : ViewModel() {
 
     private val _posts = MutableLiveData<List<HomePost>>(repository.getHomePosts())
     val posts: LiveData<List<HomePost>> = _posts
+
+    private val _isRefreshing = MutableLiveData(false)
+    val isRefreshing: LiveData<Boolean> = _isRefreshing
+
+    fun refresh() {
+        viewModelScope.launch {
+            _isRefreshing.value = true
+            delay(1000)
+            _posts.value = repository.getHomePosts()
+            _isRefreshing.value = false
+        }
+    }
 
     fun onLikeToggled(post: HomePost) {
         _posts.value = _posts.value?.map {

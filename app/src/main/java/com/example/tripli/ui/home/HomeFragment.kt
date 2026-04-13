@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.tripli.R
 import com.example.tripli.databinding.FragmentHomeBinding
 import com.example.tripli.di.ServiceLocator
 
@@ -56,11 +57,18 @@ class HomeFragment : Fragment() {
             layoutManager = LinearLayoutManager(requireContext())
             setHasFixedSize(false)
         }
+        binding.swipeRefreshLayout.apply {
+            setColorSchemeColors(resources.getColor(R.color.accentBlue, null))
+            setOnRefreshListener { viewModel.refresh() }
+        }
     }
 
     private fun observeViewModel() {
         viewModel.posts.observe(viewLifecycleOwner) { posts ->
             adapter.submitList(posts)
+        }
+        viewModel.isRefreshing.observe(viewLifecycleOwner) { isRefreshing ->
+            binding.swipeRefreshLayout.isRefreshing = isRefreshing
         }
     }
 }
