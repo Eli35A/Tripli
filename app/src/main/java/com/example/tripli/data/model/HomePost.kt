@@ -17,5 +17,6 @@ data class HomePost(
     val likeCount: Int,
     val commentCount: Int,
     val isLiked: Boolean = false,
-    val isSaved: Boolean = false
+    val isSaved: Boolean = false,
+    val comments: List<Comment> = emptyList()
 )

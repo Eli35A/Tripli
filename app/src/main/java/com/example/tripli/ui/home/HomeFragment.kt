@@ -46,7 +46,10 @@ class HomeFragment : Fragment() {
         adapter = HomePostAdapter(
             onLikeClick = viewModel::onLikeToggled,
             onSaveClick = viewModel::onSaveToggled,
-            onCommentClick = { /* TODO: open comments sheet */ }
+            onCommentClick = { post ->
+                CommentBottomSheetFragment.newInstance(post.id)
+                    .show(childFragmentManager, CommentBottomSheetFragment.TAG)
+            }
         )
         binding.homeRecyclerView.apply {
             this.adapter = this@HomeFragment.adapter

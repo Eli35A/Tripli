@@ -1,6 +1,7 @@
 package com.example.tripli.data.repository
 
 import com.example.tripli.R
+import com.example.tripli.data.model.Comment
 import com.example.tripli.data.model.HomePost
 
 class HomePostRepository {
@@ -19,7 +20,11 @@ class HomePostRepository {
             caption = "Found this incredible spot away from the crowds. The hike down was worth every step!",
             hashtags = listOf("#bali", "#hiddenparadise", "#nature"),
             likeCount = 1200,
-            commentCount = 45
+            commentCount = 2,
+            comments = listOf(
+                Comment("c1", "Alex Chen", "A", "#5BA4CF", "This place is magical! I visited last year", "5h ago"),
+                Comment("c2", "Maria Santos", "M", "#6DBF8A", "How do you get there? Is it far from the main road?", "3h ago")
+            )
         ),
         HomePost(
             id = "2",
@@ -34,7 +39,10 @@ class HomePostRepository {
             caption = "Must try the tako tamago (octopus inside a quail egg) at Nishiki Market. The flavors are unreal.",
             hashtags = listOf("#japan", "#foodie", "#kyoto"),
             likeCount = 856,
-            commentCount = 23
+            commentCount = 1,
+            comments = listOf(
+                Comment("c3", "Jane Cooper", "J", "#F4A460", "Nishiki Market is incredible! Don't miss the pickles stall too", "4h ago")
+            )
         ),
         HomePost(
             id = "3",
@@ -49,7 +57,12 @@ class HomePostRepository {
             caption = "The cable car ride to the summit is breathtaking. Get there early to beat the clouds.",
             hashtags = listOf("#swissalps", "#hiking", "#mountains"),
             likeCount = 2100,
-            commentCount = 87
+            commentCount = 3,
+            comments = listOf(
+                Comment("c4", "Alex Chen", "A", "#5BA4CF", "The views are unreal up there!", "22h ago"),
+                Comment("c5", "Jane Cooper", "J", "#F4A460", "I want to go so badly!", "20h ago"),
+                Comment("c6", "Carlos Lima", "C", "#B97FF5", "Pro tip: take the first gondola at 7am to avoid crowds", "18h ago")
+            )
         )
     )
 }
