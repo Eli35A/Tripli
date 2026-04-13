@@ -9,16 +9,30 @@
     android:paddingTop="8dp"
     android:paddingBottom="8dp">
 
-    <TextView
-        android:id="@+id/commentInitialTextView"
+    <FrameLayout
         android:layout_width="36dp"
-        android:layout_height="36dp"
-        android:gravity="center"
-        android:textColor="@color/white"
-        android:textSize="13sp"
-        android:textStyle="bold"
-        tools:background="@color/accentBlue"
-        tools:text="J" />
+        android:layout_height="36dp">
+
+        <TextView
+            android:id="@+id/commentInitialTextView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:textColor="@color/white"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            tools:background="@color/accentBlue"
+            tools:text="J" />
+
+        <ImageView
+            android:id="@+id/commentAvatarImageView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:visibility="gone"
+            android:contentDescription="@null" />
+
+    </FrameLayout>
 
     <LinearLayout
         android:layout_width="0dp"

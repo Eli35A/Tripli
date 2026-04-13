@@ -1,14 +1,12 @@
 package com.example.tripli.data.model
 
-import androidx.annotation.DrawableRes
-
 data class HomePost(
     val id: String,
-    val userName: String,
-    val userInitial: String,
-    val userAccentHex: String,
+    val authorId: String,
+    val authorName: String,
+    val authorPhotoUrl: String?,
     val timeAgo: String,
-    @DrawableRes val imageResId: Int,
+    val imageUrl: String,
     val location: String,
     val rating: Float,
     val title: String,
@@ -17,6 +15,5 @@ data class HomePost(
     val likeCount: Int,
     val commentCount: Int,
     val isLiked: Boolean = false,
-    val isSaved: Boolean = false,
-    val comments: List<Comment> = emptyList()
+    val isSaved: Boolean = false
 )

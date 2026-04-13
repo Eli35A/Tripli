@@ -27,7 +27,6 @@ class CommentBottomSheetFragment : BottomSheetDialogFragment() {
     )
 
     private val adapter = CommentAdapter()
-
     private val postId: String by lazy { requireArguments().getString(ARG_POST_ID)!! }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
@@ -49,11 +48,7 @@ class CommentBottomSheetFragment : BottomSheetDialogFragment() {
         dialog?.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentCommentBottomSheetBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -63,6 +58,7 @@ class CommentBottomSheetFragment : BottomSheetDialogFragment() {
         setupRecyclerView()
         observeViewModel()
         setupInput()
+        homeViewModel.loadComments(postId)
     }
 
     override fun onDestroyView() {
@@ -79,14 +75,12 @@ class CommentBottomSheetFragment : BottomSheetDialogFragment() {
     }
 
     private fun observeViewModel() {
-        homeViewModel.posts.observe(viewLifecycleOwner) { posts ->
-            val comments = posts.find { it.id == postId }?.comments ?: return@observe
+        homeViewModel.comments.observe(viewLifecycleOwner) { comments ->
             binding.commentCountTextView.text = comments.size.toString()
             adapter.submitList(comments)
-            val isEmpty = comments.isEmpty()
-            binding.commentsRecyclerView.isVisible = !isEmpty
-            binding.emptyTextView.isVisible = isEmpty
-            if (!isEmpty) binding.commentsRecyclerView.scrollToPosition(comments.size - 1)
+            binding.commentsRecyclerView.isVisible = comments.isNotEmpty()
+            binding.emptyTextView.isVisible = comments.isEmpty()
+            if (comments.isNotEmpty()) binding.commentsRecyclerView.scrollToPosition(comments.size - 1)
         }
     }
 

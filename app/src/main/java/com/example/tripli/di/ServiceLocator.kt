@@ -35,6 +35,9 @@ object ServiceLocator {
     }
 
     fun provideHomePostRepository(): HomePostRepository {
-        return HomePostRepository()
+        return HomePostRepository(
+            firestore = FirebaseFirestore.getInstance(),
+            auth = FirebaseAuth.getInstance()
+        )
     }
 }
