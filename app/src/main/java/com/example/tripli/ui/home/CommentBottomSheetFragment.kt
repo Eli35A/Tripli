@@ -1,15 +1,19 @@
 package com.example.tripli.ui.home
 
+import android.app.Dialog
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowManager
 import androidx.core.view.isVisible
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.tripli.databinding.FragmentCommentBottomSheetBinding
 import com.example.tripli.di.ServiceLocator
+import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 
 class CommentBottomSheetFragment : BottomSheetDialogFragment() {
@@ -25,6 +29,25 @@ class CommentBottomSheetFragment : BottomSheetDialogFragment() {
     private val adapter = CommentAdapter()
 
     private val postId: String by lazy { requireArguments().getString(ARG_POST_ID)!! }
+
+    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+        val dialog = super.onCreateDialog(savedInstanceState) as BottomSheetDialog
+        dialog.setOnShowListener {
+            val sheet = dialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
+            sheet?.let {
+                BottomSheetBehavior.from(it).apply {
+                    state = BottomSheetBehavior.STATE_EXPANDED
+                    skipCollapsed = true
+                }
+            }
+        }
+        return dialog
+    }
+
+    override fun onStart() {
+        super.onStart()
+        dialog?.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
