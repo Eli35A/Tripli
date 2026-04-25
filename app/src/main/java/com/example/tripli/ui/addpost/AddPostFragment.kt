@@ -5,14 +5,23 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.findNavController
 import com.example.tripli.R
 import com.example.tripli.databinding.FragmentAddPostBinding
+import com.example.tripli.di.ServiceLocator
+import com.google.android.material.snackbar.Snackbar
 
 class AddPostFragment : Fragment() {
 
     private var _binding: FragmentAddPostBinding? = null
     private val binding get() = _binding!!
+
+    private val viewModel: AddPostViewModel by viewModels {
+        AddPostViewModel.Factory(ServiceLocator.provideHomePostRepository())
+    }
 
     private var currentRating = 4
     private val starViews get() = listOf(
@@ -37,6 +46,7 @@ class AddPostFragment : Fragment() {
         setupStarRating()
         setupChips()
         setupButtons()
+        observeViewModel()
     }
 
     private fun setupStarRating() {
@@ -50,13 +60,12 @@ class AddPostFragment : Fragment() {
     }
 
     private fun updateStars(rating: Int) {
-        val filledColor = ContextCompat.getColor(requireContext(), R.color.accentBlue)
+        val accentColor = ContextCompat.getColor(requireContext(), R.color.accentBlue)
         starViews.forEachIndexed { index, imageView ->
             imageView.alpha = if (index < rating) 1f else 0.3f
-            imageView.setColorFilter(filledColor)
+            imageView.setColorFilter(accentColor)
         }
-        val ratingText = if (rating % 1 == 0) "$rating.0" else "$rating"
-        binding.tvRatingValue.text = ratingText
+        binding.tvRatingValue.text = "$rating.0"
     }
 
     private fun setupChips() {
@@ -89,7 +98,36 @@ class AddPostFragment : Fragment() {
         }
 
         binding.tvSharePost.setOnClickListener {
-            // Submit logic will be wired up when ready
+            val selectedHashtags = buildList {
+                if (binding.chipAdventure.isChecked) add("#Adventure")
+                if (binding.chipFood.isChecked) add("#Food")
+                if (binding.chipRelaxation.isChecked) add("#Relaxation")
+                if (binding.chipCulture.isChecked) add("#Culture")
+            }
+            viewModel.submitPost(
+                location = binding.etLocation.text.toString(),
+                rating = currentRating.toFloat(),
+                caption = binding.etReview.text.toString(),
+                hashtags = selectedHashtags
+            )
+        }
+    }
+
+    private fun observeViewModel() {
+        viewModel.isSubmitting.observe(viewLifecycleOwner) { isSubmitting ->
+            binding.tvSharePost.isEnabled = !isSubmitting
+            binding.tvSharePost.alpha = if (isSubmitting) 0.6f else 1f
+        }
+
+        viewModel.submitSuccess.observe(viewLifecycleOwner) { success ->
+            if (!success) return@observe
+            findNavController().navigate(R.id.action_addPostFragment_to_homeFragment)
+        }
+
+        viewModel.errorMessage.observe(viewLifecycleOwner) { message ->
+            if (message == null) return@observe
+            Snackbar.make(binding.root, message, Snackbar.LENGTH_LONG).show()
+            viewModel.onErrorShown()
         }
     }
 
