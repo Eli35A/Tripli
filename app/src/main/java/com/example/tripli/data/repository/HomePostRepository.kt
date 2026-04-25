@@ -1,5 +1,6 @@
 package com.example.tripli.data.repository
 
+import android.net.Uri
 import com.example.tripli.data.model.Comment
 import com.example.tripli.data.model.HomePost
 import com.example.tripli.utils.TimeUtils
@@ -7,13 +8,16 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.tasks.await
+import java.util.UUID
 
 class HomePostRepository(
     private val firestore: FirebaseFirestore,
-    private val auth: FirebaseAuth
+    private val auth: FirebaseAuth,
+    private val storage: FirebaseStorage = FirebaseStorage.getInstance()
 ) {
 
     companion object {
@@ -117,6 +121,13 @@ class HomePostRepository(
                 timeAgo = TimeUtils.timeAgo(createdAt)
             )
         }
+    }
+
+    suspend fun uploadImage(uri: Uri): String {
+        val userId = auth.currentUser?.uid ?: error("Not authenticated")
+        val ref = storage.reference.child("posts/$userId/${UUID.randomUUID()}.jpg")
+        ref.putFile(uri).await()
+        return ref.downloadUrl.await().toString()
     }
 
     suspend fun createPost(

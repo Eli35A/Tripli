@@ -1,5 +1,6 @@
 package com.example.tripli.ui.addpost
 
+import android.net.Uri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -10,6 +11,9 @@ import kotlinx.coroutines.launch
 
 class AddPostViewModel(private val repository: HomePostRepository) : ViewModel() {
 
+    private val _selectedImages = MutableLiveData<List<Uri>>(emptyList())
+    val selectedImages: LiveData<List<Uri>> = _selectedImages
+
     private val _isSubmitting = MutableLiveData(false)
     val isSubmitting: LiveData<Boolean> = _isSubmitting
 
@@ -18,6 +22,10 @@ class AddPostViewModel(private val repository: HomePostRepository) : ViewModel()
 
     private val _errorMessage = MutableLiveData<String?>(null)
     val errorMessage: LiveData<String?> = _errorMessage
+
+    fun onImagesSelected(uris: List<Uri>) {
+        _selectedImages.value = uris
+    }
 
     fun submitPost(
         location: String,
@@ -32,11 +40,15 @@ class AddPostViewModel(private val repository: HomePostRepository) : ViewModel()
         viewModelScope.launch {
             _isSubmitting.value = true
             runCatching {
+                val imageUrl = _selectedImages.value?.firstOrNull()
+                    ?.let { repository.uploadImage(it) }
+                    ?: ""
                 repository.createPost(
                     location = location.trim(),
                     rating = rating,
                     caption = caption.trim(),
-                    hashtags = hashtags
+                    hashtags = hashtags,
+                    imageUrl = imageUrl
                 )
             }.onSuccess {
                 _submitSuccess.value = true

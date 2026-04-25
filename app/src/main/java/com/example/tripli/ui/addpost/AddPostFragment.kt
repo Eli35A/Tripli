@@ -4,11 +4,13 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.tripli.R
 import com.example.tripli.databinding.FragmentAddPostBinding
 import com.example.tripli.di.ServiceLocator
@@ -21,6 +23,16 @@ class AddPostFragment : Fragment() {
 
     private val viewModel: AddPostViewModel by viewModels {
         AddPostViewModel.Factory(ServiceLocator.provideHomePostRepository())
+    }
+
+    private lateinit var imageAdapter: SelectedImageAdapter
+
+    private val pickImages = registerForActivityResult(
+        ActivityResultContracts.GetMultipleContents()
+    ) { uris ->
+        if (uris.isNotEmpty()) {
+            viewModel.onImagesSelected(uris)
+        }
     }
 
     private var currentRating = 4
@@ -43,10 +55,21 @@ class AddPostFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        setupImageRecyclerView()
         setupStarRating()
         setupChips()
         setupButtons()
         observeViewModel()
+    }
+
+    private fun setupImageRecyclerView() {
+        imageAdapter = SelectedImageAdapter()
+        binding.rvSelectedImages.apply {
+            adapter = imageAdapter
+            layoutManager = LinearLayoutManager(
+                requireContext(), LinearLayoutManager.HORIZONTAL, false
+            )
+        }
     }
 
     private fun setupStarRating() {
@@ -94,7 +117,7 @@ class AddPostFragment : Fragment() {
         }
 
         binding.tvSelectImages.setOnClickListener {
-            // Image picker will be wired up when ready
+            pickImages.launch("image/*")
         }
 
         binding.tvSharePost.setOnClickListener {
@@ -114,6 +137,14 @@ class AddPostFragment : Fragment() {
     }
 
     private fun observeViewModel() {
+        viewModel.selectedImages.observe(viewLifecycleOwner) { uris ->
+            val hasImages = uris.isNotEmpty()
+            binding.layoutPhotoPlaceholder.isVisible = !hasImages
+            binding.rvSelectedImages.isVisible = hasImages
+            binding.tvSelectImages.text = if (hasImages) "Add More" else "Select Images"
+            imageAdapter.submitList(uris)
+        }
+
         viewModel.isSubmitting.observe(viewLifecycleOwner) { isSubmitting ->
             binding.tvSharePost.isEnabled = !isSubmitting
             binding.tvSharePost.alpha = if (isSubmitting) 0.6f else 1f
@@ -133,6 +164,7 @@ class AddPostFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        binding.rvSelectedImages.adapter = null
         _binding = null
     }
 }
