@@ -119,6 +119,32 @@ class HomePostRepository(
         }
     }
 
+    suspend fun createPost(
+        location: String,
+        rating: Float,
+        caption: String,
+        hashtags: List<String>,
+        imageUrl: String = ""
+    ) {
+        val user = auth.currentUser ?: error("Not authenticated")
+        firestore.collection(POSTS).add(
+            hashMapOf(
+                "authorId" to user.uid,
+                "authorName" to (user.displayName ?: "Anonymous"),
+                "authorPhotoUrl" to (user.photoUrl?.toString() ?: ""),
+                "location" to location,
+                "title" to location,
+                "rating" to rating.toDouble(),
+                "caption" to caption,
+                "hashtags" to hashtags,
+                "imageUrl" to imageUrl,
+                "likeCount" to 0L,
+                "commentCount" to 0L,
+                "createdAt" to FieldValue.serverTimestamp()
+            )
+        ).await()
+    }
+
     suspend fun addComment(postId: String, text: String): Comment {
         val user = auth.currentUser ?: error("Not authenticated")
         val postRef = firestore.collection(POSTS).document(postId)

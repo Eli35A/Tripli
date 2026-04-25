@@ -114,7 +114,11 @@ class HomePostAdapter(
         }
 
         private fun formatCount(count: Int): String =
-            if (count >= 1000) String.format("%.1fk", count / 1000.0) else count.toString()
+            if (count >= COUNT_THRESHOLD) String.format("%.1fk", count / COUNT_THRESHOLD.toDouble()) else count.toString()
+    }
+
+    companion object {
+        private const val COUNT_THRESHOLD = 1000
     }
 
     class DiffCallback : DiffUtil.ItemCallback<HomePost>() {
