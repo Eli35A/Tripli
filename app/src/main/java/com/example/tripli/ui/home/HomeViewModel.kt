@@ -8,56 +8,96 @@ import androidx.lifecycle.viewModelScope
 import com.example.tripli.data.model.Comment
 import com.example.tripli.data.model.HomePost
 import com.example.tripli.data.repository.HomePostRepository
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class HomeViewModel(private val repository: HomePostRepository) : ViewModel() {
 
-    private val _posts = MutableLiveData<List<HomePost>>(repository.getHomePosts())
+    private val _posts = MutableLiveData<List<HomePost>>(emptyList())
     val posts: LiveData<List<HomePost>> = _posts
+
+    private val _isLoading = MutableLiveData(false)
+    val isLoading: LiveData<Boolean> = _isLoading
 
     private val _isRefreshing = MutableLiveData(false)
     val isRefreshing: LiveData<Boolean> = _isRefreshing
 
+    private val _comments = MutableLiveData<List<Comment>>(emptyList())
+    val comments: LiveData<List<Comment>> = _comments
+
+    private val _errorMessage = MutableLiveData<String?>(null)
+    val errorMessage: LiveData<String?> = _errorMessage
+
+    init {
+        loadPosts(showLoader = true)
+    }
+
+    fun loadPosts(showLoader: Boolean = false) {
+        viewModelScope.launch {
+            if (showLoader) _isLoading.value = true
+            runCatching { repository.getHomePosts() }
+                .onSuccess { _posts.value = it }
+                .onFailure { _errorMessage.value = it.localizedMessage }
+            if (showLoader) _isLoading.value = false
+        }
+    }
+
     fun refresh() {
         viewModelScope.launch {
             _isRefreshing.value = true
-            delay(1000)
-            _posts.value = repository.getHomePosts()
+            runCatching { repository.getHomePosts() }
+                .onSuccess { _posts.value = it }
+                .onFailure { _errorMessage.value = it.localizedMessage }
             _isRefreshing.value = false
         }
     }
 
     fun onLikeToggled(post: HomePost) {
-        _posts.value = _posts.value?.map {
-            if (it.id == post.id) it.copy(
-                isLiked = !it.isLiked,
-                likeCount = if (it.isLiked) it.likeCount - 1 else it.likeCount + 1
-            ) else it
+        updatePost(post.copy(
+            isLiked = !post.isLiked,
+            likeCount = if (post.isLiked) post.likeCount - 1 else post.likeCount + 1
+        ))
+        viewModelScope.launch {
+            runCatching { repository.toggleLike(post) }
+                .onFailure { updatePost(post) }
         }
     }
 
     fun onSaveToggled(post: HomePost) {
-        _posts.value = _posts.value?.map {
-            if (it.id == post.id) it.copy(isSaved = !it.isSaved) else it
+        updatePost(post.copy(isSaved = !post.isSaved))
+        viewModelScope.launch {
+            runCatching { repository.toggleSave(post) }
+                .onFailure { updatePost(post) }
+        }
+    }
+
+    fun loadComments(postId: String) {
+        _comments.value = emptyList()
+        viewModelScope.launch {
+            runCatching { repository.getComments(postId) }
+                .onSuccess { _comments.value = it }
+                .onFailure { _errorMessage.value = it.localizedMessage }
         }
     }
 
     fun addComment(postId: String, text: String) {
-        val newComment = Comment(
-            id = System.currentTimeMillis().toString(),
-            userName = "You",
-            userInitial = "Y",
-            userAccentHex = "#39C4E7",
-            text = text,
-            timeAgo = "Just now"
-        )
-        _posts.value = _posts.value?.map {
-            if (it.id == postId) it.copy(
-                comments = it.comments + newComment,
-                commentCount = it.commentCount + 1
-            ) else it
+        viewModelScope.launch {
+            runCatching { repository.addComment(postId, text) }
+                .onSuccess { comment ->
+                    _comments.value = (_comments.value ?: emptyList()) + comment
+                    updatePost(
+                        _posts.value?.find { it.id == postId }
+                            ?.copy(commentCount = (_posts.value?.find { it.id == postId }?.commentCount ?: 0) + 1)
+                            ?: return@onSuccess
+                    )
+                }
+                .onFailure { _errorMessage.value = it.localizedMessage }
         }
+    }
+
+    fun onErrorShown() { _errorMessage.value = null }
+
+    private fun updatePost(post: HomePost) {
+        _posts.value = _posts.value?.map { if (it.id == post.id) post else it }
     }
 
     class Factory(private val repository: HomePostRepository) : ViewModelProvider.Factory {
