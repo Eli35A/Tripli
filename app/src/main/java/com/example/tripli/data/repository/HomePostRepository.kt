@@ -1,6 +1,6 @@
 package com.example.tripli.data.repository
 
-import android.net.Uri
+import android.util.Base64
 import com.example.tripli.data.model.Comment
 import com.example.tripli.data.model.HomePost
 import com.example.tripli.utils.TimeUtils
@@ -8,16 +8,13 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
-import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.tasks.await
-import java.util.UUID
 
 class HomePostRepository(
     private val firestore: FirebaseFirestore,
-    private val auth: FirebaseAuth,
-    private val storage: FirebaseStorage = FirebaseStorage.getInstance()
+    private val auth: FirebaseAuth
 ) {
 
     companion object {
@@ -123,23 +120,15 @@ class HomePostRepository(
         }
     }
 
-    suspend fun uploadImage(uri: Uri): String {
-        val userId = auth.currentUser?.uid ?: error("Not authenticated")
-        val ref = storage.reference.child("posts/$userId/${UUID.randomUUID()}.jpg")
-        ref.putFile(uri).await()
-        return ref.downloadUrl.await().toString()
-    }
-
-    suspend fun createPost(
-        location: String,
-        rating: Float,
-        caption: String,
-        hashtags: List<String>,
-        imageUrl: String = ""
-    ) {
+    suspend fun createPost(imageBytes: ByteArray?, location: String, rating: Float, caption: String, hashtags: List<String>) {
         val user = auth.currentUser ?: error("Not authenticated")
+
+        val imageUrl = if (imageBytes != null) {
+            "data:image/jpeg;base64," + Base64.encodeToString(imageBytes, Base64.NO_WRAP)
+        } else ""
+
         firestore.collection(POSTS).add(
-            hashMapOf(
+            mapOf(
                 "authorId" to user.uid,
                 "authorName" to (user.displayName ?: "Anonymous"),
                 "authorPhotoUrl" to (user.photoUrl?.toString() ?: ""),
