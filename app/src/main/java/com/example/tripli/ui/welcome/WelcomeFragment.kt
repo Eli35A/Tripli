@@ -8,7 +8,6 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
-import androidx.navigation.fragment.navArgs
 import com.example.tripli.R
 import com.example.tripli.databinding.FragmentWelcomeBinding
 import com.example.tripli.di.ServiceLocator
@@ -19,8 +18,6 @@ class WelcomeFragment : Fragment() {
 
     private var _binding: FragmentWelcomeBinding? = null
     private val binding get() = _binding!!
-
-    private val args: WelcomeFragmentArgs by navArgs()
 
     private val viewModel: WelcomeViewModel by viewModels {
         WelcomeViewModel.Factory(
@@ -41,11 +38,7 @@ class WelcomeFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         bindActions()
         observeViewModel()
-        if (!args.uid.isNullOrBlank()) {
-            viewModel.loadUser(args.uid)
-        } else {
-            viewModel.loadCurrentUser()
-        }
+        viewModel.loadCurrentUser()
     }
 
     override fun onDestroyView() {
@@ -88,8 +81,7 @@ class WelcomeFragment : Fragment() {
         viewModel.signedOut.observe(viewLifecycleOwner) { signedOut ->
             if (!signedOut) return@observe
 
-            val action = WelcomeFragmentDirections.actionWelcomeFragmentToLoginFragment()
-            findNavController().navigate(action)
+            findNavController().navigate(R.id.loginFragment)
             viewModel.onSignedOutNavigated()
         }
 

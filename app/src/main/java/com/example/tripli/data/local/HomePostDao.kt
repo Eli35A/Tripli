@@ -14,6 +14,12 @@ interface HomePostDao {
     @Query("SELECT * FROM home_posts ORDER BY createdAt DESC")
     suspend fun getAll(): List<HomePostEntity>
 
+    @Query("SELECT * FROM home_posts WHERE authorId = :authorId ORDER BY createdAt DESC")
+    suspend fun getPostsByAuthor(authorId: String): List<HomePostEntity>
+
+    @Query("SELECT * FROM home_posts WHERE isLiked = 1 ORDER BY createdAt DESC")
+    suspend fun getLikedPosts(): List<HomePostEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(posts: List<HomePostEntity>)
 

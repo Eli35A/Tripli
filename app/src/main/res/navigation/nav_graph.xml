@@ -42,18 +42,13 @@
     </fragment>
 
     <fragment
-        android:id="@+id/welcomeFragment"
-        android:name="com.example.tripli.ui.welcome.WelcomeFragment"
-        android:label="@string/welcome_title"
-        tools:layout="@layout/fragment_welcome">
-
-        <argument
-            android:name="uid"
-            android:defaultValue=""
-            app:argType="string" />
+        android:id="@+id/profileFragment"
+        android:name="com.example.tripli.ui.profile.ProfileFragment"
+        android:label="Profile"
+        tools:layout="@layout/fragment_profile">
 
         <action
-            android:id="@+id/action_welcomeFragment_to_loginFragment"
+            android:id="@+id/action_profileFragment_to_loginFragment"
             app:destination="@id/loginFragment"
             app:launchSingleTop="true"
             app:popUpTo="@id/nav_graph"

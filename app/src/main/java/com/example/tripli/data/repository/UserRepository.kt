@@ -20,8 +20,17 @@ class UserRepository(
     private val userDao: AppUserDao
 ) {
 
-    fun getCurrentUser(): AppUser? {
-        return auth.currentUser?.toAppUser()
+    fun getCurrentUser(): AppUser? = auth.currentUser?.toAppUser()
+
+    fun getCurrentUserId(): String? = auth.currentUser?.uid
+
+    suspend fun getCachedUser(uid: String): AppUser? = withContext(Dispatchers.IO) {
+        userDao.getUserById(uid)?.toDomain()
+    }
+
+    suspend fun getCachedCurrentUser(): AppUser? {
+        val uid = auth.currentUser?.uid ?: return null
+        return getCachedUser(uid)
     }
 
     suspend fun signInWithGoogle(idToken: String): Result<AppUser> {
@@ -34,16 +43,10 @@ class UserRepository(
 
                 Log.d(TAG, "signInWithGoogle: firebase auth success for uid=${firebaseUser.uid}")
                 val appUser = firebaseUser.toAppUser()
-                
-                // Save locally
-                Log.d(TAG, "signInWithGoogle: saving user locally")
+
                 saveLocalUser(appUser)
-                
-                // Sync to remote and wait for confirm
-                Log.d(TAG, "signInWithGoogle: saving user to remote firestore")
                 saveRemoteUser(appUser)
                 Log.d(TAG, "signInWithGoogle: remote save complete")
-                
                 appUser
             }
         }
@@ -52,32 +55,33 @@ class UserRepository(
     suspend fun syncSignedInUser(): AppUser? {
         return withContext(Dispatchers.IO) {
             val currentUser = auth.currentUser ?: return@withContext null
-            Log.d(TAG, "syncSignedInUser: found current user ${currentUser.uid}, syncing...")
             val appUser = currentUser.toAppUser()
             saveLocalUser(appUser)
             saveRemoteUser(appUser)
-            Log.d(TAG, "syncSignedInUser: sync complete")
             appUser
         }
     }
 
-    suspend fun getCachedUser(uid: String): AppUser? {
-        return withContext(Dispatchers.IO) {
-            userDao.getUserById(uid)?.toDomain()
+    suspend fun updateProfile(uid: String, name: String, bio: String, localPhotoPath: String?) {
+        withContext(Dispatchers.IO) {
+            val existing = userDao.getUserById(uid) ?: return@withContext
+            userDao.upsert(existing.copy(
+                displayName = name,
+                bio = bio,
+                localPhotoPath = localPhotoPath ?: existing.localPhotoPath
+            ))
+            val updates = mutableMapOf<String, Any>("displayName" to name, "bio" to bio)
+            firestore.collection(USERS_COLLECTION).document(uid).update(updates).await()
         }
     }
 
     suspend fun signOut() {
         withContext(Dispatchers.IO) {
-            Log.d(TAG, "signOut: signing out user")
             auth.signOut()
             userDao.clearAll()
         }
     }
 
-    /**
-     * Saves user metadata to Firestore and waits for completion.
-     */
     private suspend fun saveRemoteUser(user: AppUser) {
         val payload = hashMapOf<String, Any?>(
             "uid" to user.uid,
@@ -86,44 +90,34 @@ class UserRepository(
             "photoUrl" to user.photoUrl,
             "lastLoginAt" to FieldValue.serverTimestamp()
         )
-
-        Log.d(TAG, "saveRemoteUser: writing to firestore path users/${user.uid}")
         firestore.collection(USERS_COLLECTION)
             .document(user.uid)
             .set(payload, SetOptions.merge())
             .await()
-        Log.d(TAG, "saveRemoteUser: firestore write finished")
     }
 
     private suspend fun saveLocalUser(user: AppUser) {
+        // Preserve existing bio and localPhotoPath across sign-in refreshes
+        val existing = userDao.getUserById(user.uid)
         userDao.upsert(
             AppUserEntity(
                 uid = user.uid,
                 displayName = user.displayName,
                 email = user.email,
                 photoUrl = user.photoUrl,
+                localPhotoPath = existing?.localPhotoPath,
+                bio = existing?.bio,
                 lastLoginAt = System.currentTimeMillis()
             )
         )
     }
 
-    private fun FirebaseUser.toAppUser(): AppUser {
-        return AppUser(
-            uid = uid,
-            displayName = displayName.orEmpty().ifBlank { "Traveler" },
-            email = email,
-            photoUrl = photoUrl?.toString()
-        )
-    }
-
-    private fun AppUserEntity.toDomain(): AppUser {
-        return AppUser(
-            uid = uid,
-            displayName = displayName,
-            email = email,
-            photoUrl = photoUrl
-        )
-    }
+    private fun FirebaseUser.toAppUser() = AppUser(
+        uid = uid,
+        displayName = displayName.orEmpty().ifBlank { "Traveler" },
+        email = email,
+        photoUrl = photoUrl?.toString()
+    )
 
     companion object {
         private const val TAG = "UserRepository"

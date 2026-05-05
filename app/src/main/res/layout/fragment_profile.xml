@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/screenBackground">
+
+    <!-- ── Header: blue gradient ── -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_profile_header"
+        android:orientation="vertical"
+        android:paddingTop="28dp"
+        android:paddingBottom="20dp"
+        android:gravity="center_horizontal">
+
+        <!-- Loading spinner (shown while profile loads) -->
+        <com.google.android.material.progressindicator.CircularProgressIndicator
+            android:id="@+id/profileLoadingIndicator"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:indeterminate="true"
+            android:visibility="gone"
+            app:indicatorColor="@color/white"
+            app:indicatorSize="24dp" />
+
+        <!-- Username -->
+        <TextView
+            android:id="@+id/profileNameTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/textPrimary"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.02"
+            tools:text="Maya Katsir" />
+
+        <!-- Profile picture (circular card) -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="84dp"
+            android:layout_height="84dp"
+            android:layout_marginTop="12dp"
+            app:cardCornerRadius="42dp"
+            app:cardElevation="4dp"
+            app:strokeColor="@color/white"
+            app:strokeWidth="2dp">
+
+            <ImageView
+                android:id="@+id/profileImageView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_profile_placeholder" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Bio -->
+        <TextView
+            android:id="@+id/profileBioTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:paddingStart="32dp"
+            android:paddingEnd="32dp"
+            android:gravity="center"
+            android:textColor="@color/textPrimary"
+            android:textSize="13sp"
+            android:maxLines="2"
+            android:ellipsize="end"
+            android:visibility="gone"
+            tools:text="Travel enthusiast ✈️ | Exploring one city at a time"
+            tools:visibility="visible" />
+
+    </LinearLayout>
+
+    <!-- ── Edit Profile button ── -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:paddingTop="12dp"
+        android:paddingBottom="4dp"
+        android:background="@color/screenBackground">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/editProfileButton"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:text="Edit Profile"
+            android:textSize="12sp"
+            android:textColor="@color/white"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            app:backgroundTint="#FF8FAB"
+            app:cornerRadius="18dp"
+            app:icon="@drawable/ic_profile"
+            app:iconSize="14dp"
+            app:iconTint="@color/white"
+            app:iconPadding="4dp" />
+
+    </LinearLayout>
+
+    <!-- ── Tab layout ── -->
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/profileTabLayout"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:background="@color/screenBackground"
+        app:tabTextColor="@color/textSecondary"
+        app:tabSelectedTextColor="@color/accentBlue"
+        app:tabIndicatorColor="@color/accentBlue"
+        app:tabIndicatorHeight="2dp"
+        app:tabTextAppearance="@style/TextAppearance.AppCompat.Small" />
+
+    <!-- ── ViewPager2 (fills rest of screen) ── -->
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/profileViewPager"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+</LinearLayout>
