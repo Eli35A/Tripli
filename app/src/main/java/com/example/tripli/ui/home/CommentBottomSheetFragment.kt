@@ -23,7 +23,7 @@ class CommentBottomSheetFragment : BottomSheetDialogFragment() {
 
     private val homeViewModel: HomeViewModel by viewModels(
         ownerProducer = { requireParentFragment() },
-        factoryProducer = { HomeViewModel.Factory(ServiceLocator.provideHomePostRepository()) }
+        factoryProducer = { HomeViewModel.Factory(ServiceLocator.provideHomePostRepository(requireContext())) }
     )
 
     private val adapter = CommentAdapter()

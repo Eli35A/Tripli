@@ -42,7 +42,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
     private val viewModel: MapViewModel by viewModels {
         MapViewModel.Factory(
-            ServiceLocator.provideHomePostRepository(),
+            ServiceLocator.provideHomePostRepository(requireContext()),
             requireActivity().application
         )
     }

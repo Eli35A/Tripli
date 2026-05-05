@@ -43,7 +43,7 @@ class MapViewModel(
             _isLoading.value = true
             _errorMessage.value = null
             try {
-                val posts = repository.getHomePosts()
+                val posts = repository.getAllCachedOrFirstPage()
                 val items = withContext(Dispatchers.IO) {
                     posts.mapNotNull { post ->
                         geocodeLocation(post.location)?.let { PostWithLocation(post, it) }

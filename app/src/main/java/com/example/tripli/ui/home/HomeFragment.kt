@@ -8,6 +8,7 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.tripli.R
 import com.example.tripli.databinding.FragmentHomeBinding
 import com.example.tripli.di.ServiceLocator
@@ -19,7 +20,7 @@ class HomeFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val viewModel: HomeViewModel by viewModels {
-        HomeViewModel.Factory(ServiceLocator.provideHomePostRepository())
+        HomeViewModel.Factory(ServiceLocator.provideHomePostRepository(requireContext()))
     }
 
     private lateinit var adapter: HomePostAdapter
@@ -54,11 +55,26 @@ class HomeFragment : Fragment() {
                     .show(childFragmentManager, CommentBottomSheetFragment.TAG)
             }
         )
+
+        val layoutManager = LinearLayoutManager(requireContext())
         binding.homeRecyclerView.apply {
             this.adapter = this@HomeFragment.adapter
-            layoutManager = LinearLayoutManager(requireContext())
+            this.layoutManager = layoutManager
             setHasFixedSize(false)
         }
+
+        // Paginated loading: trigger next page when 3 items from the end
+        binding.homeRecyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                if (dy <= 0) return
+                val lastVisible = layoutManager.findLastVisibleItemPosition()
+                val total = layoutManager.itemCount
+                if (total > 0 && lastVisible >= total - 3 && viewModel.canLoadMore.value == true) {
+                    viewModel.loadNextPage()
+                }
+            }
+        })
+
         binding.swipeRefreshLayout.apply {
             setColorSchemeColors(resources.getColor(R.color.accentBlue, null))
             setOnRefreshListener { viewModel.refresh() }
@@ -78,6 +94,9 @@ class HomeFragment : Fragment() {
         }
         viewModel.isRefreshing.observe(viewLifecycleOwner) { isRefreshing ->
             binding.swipeRefreshLayout.isRefreshing = isRefreshing
+        }
+        viewModel.isLoadingMore.observe(viewLifecycleOwner) { isLoadingMore ->
+            binding.loadMoreIndicator.isVisible = isLoadingMore
         }
         viewModel.errorMessage.observe(viewLifecycleOwner) { message ->
             if (message == null) return@observe
