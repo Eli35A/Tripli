@@ -1,0 +1,170 @@
+package com.example.tripli.ui.map
+
+import android.Manifest
+import android.annotation.SuppressLint
+import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.Path
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import androidx.core.view.isVisible
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import com.example.tripli.R
+import com.example.tripli.databinding.FragmentMapBinding
+import com.example.tripli.di.ServiceLocator
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.OnMapReadyCallback
+import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.BitmapDescriptor
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.material.snackbar.Snackbar
+
+class MapFragment : Fragment(), OnMapReadyCallback {
+
+    private var _binding: FragmentMapBinding? = null
+    private val binding get() = _binding!!
+
+    private var googleMap: GoogleMap? = null
+    private val markerToPost = HashMap<String, MapViewModel.PostWithLocation>()
+    private var pinDescriptor: BitmapDescriptor? = null
+
+    private val viewModel: MapViewModel by viewModels {
+        MapViewModel.Factory(
+            ServiceLocator.provideHomePostRepository(),
+            requireActivity().application
+        )
+    }
+
+    private val locationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted -> if (granted) enableMyLocation() }
+
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        _binding = FragmentMapBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        val mapFrag = childFragmentManager.findFragmentById(R.id.mapContainer) as? SupportMapFragment
+            ?: SupportMapFragment.newInstance().also {
+                childFragmentManager.beginTransaction().replace(R.id.mapContainer, it).commit()
+            }
+        mapFrag.getMapAsync(this)
+        observeViewModel()
+    }
+
+    override fun onMapReady(map: GoogleMap) {
+        googleMap = map
+        map.uiSettings.isZoomControlsEnabled = true
+        requestLocationPermission()
+        viewModel.postLocations.value?.let { placeMarkers(it) }
+    }
+
+    private fun observeViewModel() {
+        viewModel.isLoading.observe(viewLifecycleOwner) { binding.mapLoadingIndicator.isVisible = it }
+        viewModel.postLocations.observe(viewLifecycleOwner) { placeMarkers(it) }
+        viewModel.errorMessage.observe(viewLifecycleOwner) { msg ->
+            if (msg == null) return@observe
+            Snackbar.make(binding.root, msg, Snackbar.LENGTH_LONG).show()
+            viewModel.onErrorShown()
+        }
+    }
+
+    private fun placeMarkers(posts: List<MapViewModel.PostWithLocation>) {
+        val map = googleMap ?: return
+        map.clear()
+        markerToPost.clear()
+        if (pinDescriptor == null) pinDescriptor = createPinDescriptor()
+        posts.forEach { item ->
+            val marker = map.addMarker(
+                MarkerOptions()
+                    .position(item.latLng)
+                    .title(item.post.title)
+                    .icon(pinDescriptor)
+            )
+            if (marker != null) markerToPost[marker.id] = item
+        }
+        map.setOnMarkerClickListener { marker ->
+            markerToPost[marker.id]?.let { item ->
+                PostMapBottomSheetFragment.newInstance(item.post)
+                    .show(childFragmentManager, PostMapBottomSheetFragment.TAG)
+            }
+            true
+        }
+    }
+
+    private fun requestLocationPermission() {
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION)
+            == PackageManager.PERMISSION_GRANTED) {
+            enableMyLocation()
+        } else {
+            locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun enableMyLocation() {
+        val map = googleMap ?: return
+        map.isMyLocationEnabled = true
+        LocationServices.getFusedLocationProviderClient(requireActivity()).lastLocation
+            .addOnSuccessListener { location ->
+                if (location != null) {
+                    map.animateCamera(
+                        CameraUpdateFactory.newLatLngZoom(
+                            LatLng(location.latitude, location.longitude), 5f
+                        )
+                    )
+                }
+            }
+    }
+
+    private fun createPinDescriptor(): BitmapDescriptor {
+        val w = 90
+        val h = 120
+        val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bmp)
+        val pinColor = Color.parseColor("#FF8FAB")   // pastel pink-red body
+        val dotColor = Color.parseColor("#D64E6F")   // deeper rose for center dot
+        val cx = w / 2f
+        val r = w / 2f
+
+        val bodyPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = pinColor }
+        val path = Path().apply {
+            moveTo(cx, h.toFloat())
+            cubicTo(cx - w * 0.4f, h * 0.7f, 0f, h * 0.5f, 0f, r)
+            arcTo(0f, 0f, w.toFloat(), w.toFloat(), 180f, -180f, false)
+            cubicTo(w.toFloat(), h * 0.5f, cx + w * 0.4f, h * 0.7f, cx, h.toFloat())
+            close()
+        }
+        canvas.drawPath(path, bodyPaint)
+
+        // White circle
+        canvas.drawCircle(cx, r, w * 0.28f, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE })
+
+        // Rose dot in center
+        canvas.drawCircle(cx, r, w * 0.12f, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = dotColor })
+
+        return BitmapDescriptorFactory.fromBitmap(bmp)
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
+}

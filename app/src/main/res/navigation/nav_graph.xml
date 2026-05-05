@@ -27,13 +27,9 @@
 
     <fragment
         android:id="@+id/mapFragment"
-        android:name="com.example.tripli.ui.PlaceholderFragment"
+        android:name="com.example.tripli.ui.map.MapFragment"
         android:label="Map"
-        tools:layout="@layout/fragment_placeholder">
-        <argument
-            android:name="title"
-            android:defaultValue="Map" />
-    </fragment>
+        tools:layout="@layout/fragment_map" />
 
     <fragment
         android:id="@+id/addPostFragment"
