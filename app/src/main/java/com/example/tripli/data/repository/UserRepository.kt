@@ -75,6 +75,25 @@ class UserRepository(
         }
     }
 
+    suspend fun fetchAndCacheUser(uid: String): AppUser? = withContext(Dispatchers.IO) {
+        runCatching {
+            val doc = firestore.collection(USERS_COLLECTION).document(uid).get().await()
+            if (!doc.exists()) return@runCatching null
+            val existing = userDao.getUserById(uid)
+            val entity = AppUserEntity(
+                uid = uid,
+                displayName = doc.getString("displayName") ?: existing?.displayName ?: "Traveler",
+                email = doc.getString("email") ?: existing?.email,
+                photoUrl = doc.getString("photoUrl") ?: existing?.photoUrl,
+                localPhotoPath = existing?.localPhotoPath,
+                bio = doc.getString("bio") ?: existing?.bio,
+                lastLoginAt = existing?.lastLoginAt ?: System.currentTimeMillis()
+            )
+            userDao.upsert(entity)
+            entity.toDomain()
+        }.getOrNull()
+    }
+
     suspend fun signOut() {
         withContext(Dispatchers.IO) {
             auth.signOut()

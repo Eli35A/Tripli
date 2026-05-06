@@ -53,9 +53,16 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
             _isLoadingProfile.value = true
             val cached = userRepo.getCachedCurrentUser()
             if (cached != null) _user.value = cached
+
+            val uid = userRepo.getCurrentUserId() ?: run {
+                _isLoadingProfile.value = false
+                return@launch
+            }
+
+            val fresh = userRepo.fetchAndCacheUser(uid)
+            if (fresh != null) _user.value = fresh
             _isLoadingProfile.value = false
 
-            val uid = userRepo.getCurrentUserId() ?: return@launch
             refreshMyPosts(uid)
             refreshLikedPosts(uid)
         }
