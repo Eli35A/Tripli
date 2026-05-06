@@ -6,7 +6,9 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.findNavController
 import androidx.viewpager2.adapter.FragmentStateAdapter
+import com.example.tripli.R
 import com.example.tripli.databinding.FragmentProfileBinding
 import com.google.android.material.tabs.TabLayoutMediator
 import com.squareup.picasso.Picasso
@@ -31,6 +33,12 @@ class ProfileFragment : Fragment() {
         binding.editProfileButton.setOnClickListener {
             EditProfileBottomSheetFragment().show(childFragmentManager, "edit_profile")
         }
+
+        binding.logoutButton.setOnClickListener { viewModel.signOut() }
+
+        viewModel.loggedOut.observe(viewLifecycleOwner) { loggedOut ->
+            if (loggedOut) findNavController().navigate(R.id.action_profileFragment_to_loginFragment)
+        }
     }
 
     private fun setupViewPager() {
@@ -42,6 +50,11 @@ class ProfileFragment : Fragment() {
         TabLayoutMediator(binding.profileTabLayout, binding.profileViewPager) { tab, position ->
             tab.text = if (position == 0) "My Posts" else "Liked Posts"
         }.attach()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        viewModel.refreshAll()
     }
 
     private fun observeViewModel() {

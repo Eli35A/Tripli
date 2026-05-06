@@ -41,6 +41,9 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     private val _isSaving = MutableLiveData(false)
     val isSaving: LiveData<Boolean> = _isSaving
 
+    private val _loggedOut = MutableLiveData(false)
+    val loggedOut: LiveData<Boolean> = _loggedOut
+
     init {
         loadProfile()
     }
@@ -68,9 +71,17 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         refreshLikedPosts(uid)
     }
 
+    fun refreshAll() {
+        val uid = userRepo.getCurrentUserId() ?: return
+        refreshMyPosts(uid)
+        refreshLikedPosts(uid)
+    }
+
     private fun refreshMyPosts(uid: String) {
         viewModelScope.launch {
             _isLoadingMyPosts.value = true
+            val cached = postRepo.getCachedUserPosts(uid)
+            if (cached.isNotEmpty()) _myPosts.value = cached
             _myPosts.value = postRepo.getUserPosts(uid)
             _isLoadingMyPosts.value = false
         }
@@ -79,8 +90,17 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     private fun refreshLikedPosts(uid: String) {
         viewModelScope.launch {
             _isLoadingLikedPosts.value = true
+            val cached = postRepo.getCachedLikedPosts()
+            if (cached.isNotEmpty()) _likedPosts.value = cached
             _likedPosts.value = postRepo.getLikedPosts(uid)
             _isLoadingLikedPosts.value = false
+        }
+    }
+
+    fun signOut() {
+        viewModelScope.launch {
+            userRepo.signOut()
+            _loggedOut.value = true
         }
     }
 

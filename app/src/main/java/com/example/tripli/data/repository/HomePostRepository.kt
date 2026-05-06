@@ -48,6 +48,12 @@ class HomePostRepository(
     suspend fun getCachedPosts(): List<HomePost> =
         postDao.getAll().map { it.toModel() }
 
+    suspend fun getCachedUserPosts(userId: String): List<HomePost> =
+        postDao.getPostsByAuthor(userId).map { it.toModel() }
+
+    suspend fun getCachedLikedPosts(): List<HomePost> =
+        postDao.getLikedPosts().map { it.toModel() }
+
     suspend fun getFirstPage(): List<HomePost> {
         lastDocument = null
         hasMore = true

@@ -8,10 +8,14 @@
     android:background="@color/screenBackground">
 
     <!-- ── Header: blue gradient ── -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_profile_header">
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/bg_profile_header"
         android:orientation="vertical"
         android:paddingTop="28dp"
         android:paddingBottom="20dp"
@@ -35,7 +39,6 @@
             android:textColor="@color/textPrimary"
             android:textSize="18sp"
             android:textStyle="bold"
-            android:letterSpacing="0.02"
             tools:text="Maya Katsir" />
 
         <!-- Profile picture (circular card) -->
@@ -77,6 +80,20 @@
 
     </LinearLayout>
 
+    <ImageButton
+        android:id="@+id/logoutButton"
+        android:layout_width="52dp"
+        android:layout_height="40dp"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="14dp"
+        android:layout_marginEnd="12dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:src="@drawable/ic_logout"
+        android:tint="@color/textPrimary"
+        android:contentDescription="Logout" />
+
+    </FrameLayout>
+
     <!-- ── Edit Profile button ── -->
     <LinearLayout
         android:layout_width="match_parent"
@@ -95,7 +112,7 @@
             android:textColor="@color/white"
             android:paddingStart="14dp"
             android:paddingEnd="14dp"
-            app:backgroundTint="#FF8FAB"
+            app:backgroundTint="@color/profileAccent"
             app:cornerRadius="18dp"
             app:icon="@drawable/ic_profile"
             app:iconSize="14dp"
@@ -114,7 +131,7 @@
         app:tabSelectedTextColor="@color/accentBlue"
         app:tabIndicatorColor="@color/accentBlue"
         app:tabIndicatorHeight="2dp"
-        app:tabTextAppearance="@style/TextAppearance.AppCompat.Small" />
+        app:tabTextAppearance="@style/TextAppearance.Material3.LabelLarge" />
 
     <!-- ── ViewPager2 (fills rest of screen) ── -->
     <androidx.viewpager2.widget.ViewPager2

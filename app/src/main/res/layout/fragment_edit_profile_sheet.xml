@@ -63,7 +63,7 @@
                 android:layout_gravity="bottom|end"
                 app:cardCornerRadius="13dp"
                 app:cardElevation="2dp"
-                app:cardBackgroundColor="#FF8FAB">
+                app:cardBackgroundColor="@color/profileAccent">
 
                 <ImageView
                     android:layout_width="14dp"
@@ -89,7 +89,7 @@
         android:layout_marginBottom="20dp"
         android:text="Change Photo"
         android:textSize="12sp"
-        app:strokeColor="#FF8FAB"
+        app:strokeColor="@color/profileAccent"
         app:strokeWidth="1dp" />
 
     <!-- Name field -->
@@ -144,9 +144,13 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/saveButton"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:paddingStart="32dp"
+            android:paddingEnd="32dp"
             android:text="Save"
+            android:textColor="@color/white"
             app:backgroundTint="@color/accentBlue" />
 
         <com.google.android.material.progressindicator.CircularProgressIndicator
