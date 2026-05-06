@@ -101,6 +101,18 @@
             android:textSize="16sp"
             android:visibility="gone" />
 
+        <!-- Load-more indicator (shown while fetching next page) -->
+        <com.google.android.material.progressindicator.CircularProgressIndicator
+            android:id="@+id/loadMoreIndicator"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|center_horizontal"
+            android:layout_marginBottom="12dp"
+            android:indeterminate="true"
+            android:visibility="gone"
+            app:indicatorColor="@color/accentBlue"
+            app:indicatorSize="28dp" />
+
     </FrameLayout>
 
 </LinearLayout>

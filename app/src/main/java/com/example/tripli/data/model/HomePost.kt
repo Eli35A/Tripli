@@ -7,6 +7,7 @@ data class HomePost(
     val authorPhotoUrl: String?,
     val timeAgo: String,
     val imageUrl: String,
+    val localImagePath: String? = null,
     val location: String,
     val rating: Float,
     val title: String,

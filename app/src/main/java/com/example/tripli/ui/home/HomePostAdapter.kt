@@ -15,6 +15,7 @@ import com.example.tripli.data.repository.HomePostRepository
 import com.example.tripli.databinding.ItemHomePostBinding
 import com.example.tripli.utils.CircleTransform
 import com.squareup.picasso.Picasso
+import java.io.File
 
 class HomePostAdapter(
     private val onLikeClick: (HomePost) -> Unit,
@@ -43,10 +44,13 @@ class HomePostAdapter(
             binding.userNameTextView.text = post.authorName
             binding.timeAgoTextView.text = post.timeAgo
 
-            Picasso.get()
-                .load(post.imageUrl.ifBlank { null })
-                .fit()
-                .centerCrop()
+            val localFile = post.localImagePath?.let { File(it) }?.takeIf { it.exists() }
+            val imageRequest = if (localFile != null) {
+                Picasso.get().load(localFile)
+            } else {
+                Picasso.get().load(post.imageUrl.ifBlank { null })
+            }
+            imageRequest.fit().centerCrop()
                 .placeholder(R.color.screenBackground)
                 .into(binding.postImageView)
 
