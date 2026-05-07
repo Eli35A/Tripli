@@ -1,10 +1,14 @@
 package com.example.tripli.data.repository
 
 import android.util.Base64
+import com.example.tripli.data.local.HomePostDao
+import com.example.tripli.data.local.HomePostEntity
+import com.example.tripli.data.local.ImageCacheManager
 import com.example.tripli.data.model.Comment
 import com.example.tripli.data.model.HomePost
 import com.example.tripli.utils.TimeUtils
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
@@ -14,7 +18,9 @@ import kotlinx.coroutines.tasks.await
 
 class HomePostRepository(
     private val firestore: FirebaseFirestore,
-    private val auth: FirebaseAuth
+    private val auth: FirebaseAuth,
+    private val postDao: HomePostDao,
+    private val imageCacheManager: ImageCacheManager
 ) {
 
     companion object {
@@ -22,6 +28,7 @@ class HomePostRepository(
         private const val LIKES = "likes"
         private const val SAVES = "saves"
         private const val COMMENTS = "comments"
+        const val PAGE_SIZE = 10L
 
         private val AVATAR_COLORS = listOf(
             "#F4A460", "#5BA4CF", "#6DBF8A",
@@ -32,45 +39,112 @@ class HomePostRepository(
             AVATAR_COLORS[Math.abs(id.hashCode()) % AVATAR_COLORS.size]
     }
 
-    suspend fun getHomePosts(): List<HomePost> {
-        val currentUserId = auth.currentUser?.uid
-        val snapshot = firestore.collection(POSTS)
-            .orderBy("createdAt", Query.Direction.DESCENDING)
-            .limit(20)
-            .get()
-            .await()
+    private var lastDocument: DocumentSnapshot? = null
+    private var hasMore = true
 
-        return coroutineScope {
+    fun hasMorePages(): Boolean = hasMore
+
+    // Returns Room cache immediately — no network call
+    suspend fun getCachedPosts(): List<HomePost> =
+        postDao.getAll().map { it.toModel() }
+
+    // Resets cursor and loads the first page from Firestore
+    suspend fun getFirstPage(): List<HomePost> {
+        lastDocument = null
+        hasMore = true
+        return fetchPage(cursor = null)
+    }
+
+    // Loads the next page using the last Firestore cursor
+    suspend fun getNextPage(): List<HomePost> {
+        if (!hasMore) return emptyList()
+        return fetchPage(cursor = lastDocument)
+    }
+
+    // Used by MapViewModel: returns cache if available, otherwise fetches first page
+    suspend fun getAllCachedOrFirstPage(): List<HomePost> {
+        val cached = postDao.getAll()
+        return if (cached.isNotEmpty()) cached.map { it.toModel() } else getFirstPage()
+    }
+
+    private suspend fun fetchPage(cursor: DocumentSnapshot?): List<HomePost> {
+        val currentUserId = auth.currentUser?.uid
+
+        var query = firestore.collection(POSTS)
+            .orderBy("createdAt", Query.Direction.DESCENDING)
+            .limit(PAGE_SIZE)
+        if (cursor != null) query = query.startAfter(cursor)
+
+        val snapshot = query.get().await()
+        hasMore = snapshot.documents.size >= PAGE_SIZE
+        lastDocument = snapshot.documents.lastOrNull()
+
+        val posts = coroutineScope {
             snapshot.documents.map { doc ->
-                async {
-                    val isLiked = if (currentUserId != null) {
-                        doc.reference.collection(LIKES).document(currentUserId).get().await().exists()
-                    } else false
-                    val isSaved = if (currentUserId != null) {
-                        doc.reference.collection(SAVES).document(currentUserId).get().await().exists()
-                    } else false
-                    val createdAt = doc.getTimestamp("createdAt")?.toDate()?.time ?: 0L
-                    HomePost(
-                        id = doc.id,
-                        authorId = doc.getString("authorId") ?: "",
-                        authorName = doc.getString("authorName") ?: "Unknown",
-                        authorPhotoUrl = doc.getString("authorPhotoUrl")?.takeIf { it.isNotBlank() },
-                        timeAgo = TimeUtils.timeAgo(createdAt),
-                        imageUrl = doc.getString("imageUrl") ?: "",
-                        location = doc.getString("location") ?: "",
-                        rating = (doc.getDouble("rating") ?: 0.0).toFloat(),
-                        title = doc.getString("title") ?: "",
-                        caption = doc.getString("caption") ?: "",
-                        hashtags = (doc.get("hashtags") as? List<*>)
-                            ?.mapNotNull { it as? String } ?: emptyList(),
-                        likeCount = (doc.getLong("likeCount") ?: 0L).toInt(),
-                        commentCount = (doc.getLong("commentCount") ?: 0L).toInt(),
-                        isLiked = isLiked,
-                        isSaved = isSaved
-                    )
-                }
+                async { buildPost(doc, currentUserId) }
             }.map { it.await() }
         }
+
+        // Persist to Room, keeping any already-cached local image path
+        val entities = snapshot.documents.mapIndexed { i, doc ->
+            val post = posts[i]
+            val createdAt = doc.getTimestamp("createdAt")?.toDate()?.time ?: 0L
+            HomePostEntity(
+                id = post.id,
+                authorId = post.authorId,
+                authorName = post.authorName,
+                authorPhotoUrl = post.authorPhotoUrl,
+                createdAt = createdAt,
+                imageUrl = post.imageUrl,
+                localImagePath = imageCacheManager.localPathFor(post.id),
+                location = post.location,
+                rating = post.rating,
+                title = post.title,
+                caption = post.caption,
+                hashtags = post.hashtags.joinToString("|"),
+                likeCount = post.likeCount,
+                commentCount = post.commentCount,
+                isLiked = post.isLiked,
+                isSaved = post.isSaved,
+                cachedAt = System.currentTimeMillis()
+            )
+        }
+        postDao.insertAll(entities)
+
+        // Kick off background image downloads for posts not yet cached
+        posts.filter { imageCacheManager.localPathFor(it.id) == null }
+            .forEach { imageCacheManager.scheduleCache(it.id, it.imageUrl) }
+
+        return posts
+    }
+
+    private suspend fun buildPost(doc: DocumentSnapshot, currentUserId: String?): HomePost {
+        val isLiked = if (currentUserId != null) {
+            doc.reference.collection(LIKES).document(currentUserId).get().await().exists()
+        } else false
+        val isSaved = if (currentUserId != null) {
+            doc.reference.collection(SAVES).document(currentUserId).get().await().exists()
+        } else false
+        val createdAt = doc.getTimestamp("createdAt")?.toDate()?.time ?: 0L
+        return HomePost(
+            id = doc.id,
+            authorId = doc.getString("authorId") ?: "",
+            authorName = doc.getString("authorName") ?: "Unknown",
+            authorPhotoUrl = doc.getString("authorPhotoUrl")?.takeIf { it.isNotBlank() },
+            timeAgo = TimeUtils.timeAgo(createdAt),
+            imageUrl = doc.getString("imageUrl") ?: "",
+            localImagePath = imageCacheManager.localPathFor(doc.id),
+            location = doc.getString("location") ?: "",
+            rating = (doc.getDouble("rating") ?: 0.0).toFloat(),
+            title = doc.getString("title") ?: "",
+            caption = doc.getString("caption") ?: "",
+            hashtags = (doc.get("hashtags") as? List<*>)
+                ?.mapNotNull { it as? String } ?: emptyList(),
+            likeCount = (doc.getLong("likeCount") ?: 0L).toInt(),
+            commentCount = (doc.getLong("commentCount") ?: 0L).toInt(),
+            isLiked = isLiked,
+            isSaved = isSaved
+        )
     }
 
     suspend fun toggleLike(post: HomePost) {

@@ -12,6 +12,8 @@ import kotlinx.coroutines.launch
 
 class HomeViewModel(private val repository: HomePostRepository) : ViewModel() {
 
+    private val allPosts = mutableListOf<HomePost>()
+
     private val _posts = MutableLiveData<List<HomePost>>(emptyList())
     val posts: LiveData<List<HomePost>> = _posts
 
@@ -21,6 +23,12 @@ class HomeViewModel(private val repository: HomePostRepository) : ViewModel() {
     private val _isRefreshing = MutableLiveData(false)
     val isRefreshing: LiveData<Boolean> = _isRefreshing
 
+    private val _isLoadingMore = MutableLiveData(false)
+    val isLoadingMore: LiveData<Boolean> = _isLoadingMore
+
+    private val _canLoadMore = MutableLiveData(false)
+    val canLoadMore: LiveData<Boolean> = _canLoadMore
+
     private val _comments = MutableLiveData<List<Comment>>(emptyList())
     val comments: LiveData<List<Comment>> = _comments
 
@@ -28,24 +36,60 @@ class HomeViewModel(private val repository: HomePostRepository) : ViewModel() {
     val errorMessage: LiveData<String?> = _errorMessage
 
     init {
-        loadPosts(showLoader = true)
+        // Show cached posts immediately while network loads
+        viewModelScope.launch {
+            val cached = repository.getCachedPosts()
+            if (cached.isNotEmpty()) {
+                allPosts.addAll(cached)
+                _posts.value = allPosts.toList()
+            }
+        }
+        loadFirstPage(showLoader = true)
     }
 
-    fun loadPosts(showLoader: Boolean = false) {
+    private fun loadFirstPage(showLoader: Boolean = false) {
         viewModelScope.launch {
             if (showLoader) _isLoading.value = true
-            runCatching { repository.getHomePosts() }
-                .onSuccess { _posts.value = it }
-                .onFailure { _errorMessage.value = it.localizedMessage }
+            runCatching { repository.getFirstPage() }
+                .onSuccess { fresh ->
+                    allPosts.clear()
+                    allPosts.addAll(fresh)
+                    _posts.value = allPosts.toList()
+                    _canLoadMore.value = repository.hasMorePages()
+                }
+                .onFailure { e ->
+                    // Keep cached data visible; only show error if nothing is displayed
+                    if (allPosts.isEmpty()) _errorMessage.value = e.localizedMessage
+                }
             if (showLoader) _isLoading.value = false
+        }
+    }
+
+    fun loadNextPage() {
+        if (_isLoadingMore.value == true || !repository.hasMorePages()) return
+        viewModelScope.launch {
+            _isLoadingMore.value = true
+            runCatching { repository.getNextPage() }
+                .onSuccess { newPosts ->
+                    allPosts.addAll(newPosts)
+                    _posts.value = allPosts.toList()
+                    _canLoadMore.value = repository.hasMorePages()
+                }
+                .onFailure { _errorMessage.value = it.localizedMessage }
+            _isLoadingMore.value = false
         }
     }
 
     fun refresh() {
         viewModelScope.launch {
             _isRefreshing.value = true
-            runCatching { repository.getHomePosts() }
-                .onSuccess { _posts.value = it }
+            runCatching { repository.getFirstPage() }
+                .onSuccess { fresh ->
+                    allPosts.clear()
+                    allPosts.addAll(fresh)
+                    _posts.value = allPosts.toList()
+                    _canLoadMore.value = repository.hasMorePages()
+                }
                 .onFailure { _errorMessage.value = it.localizedMessage }
             _isRefreshing.value = false
         }
@@ -84,11 +128,8 @@ class HomeViewModel(private val repository: HomePostRepository) : ViewModel() {
             runCatching { repository.addComment(postId, text) }
                 .onSuccess { comment ->
                     _comments.value = (_comments.value ?: emptyList()) + comment
-                    updatePost(
-                        _posts.value?.find { it.id == postId }
-                            ?.copy(commentCount = (_posts.value?.find { it.id == postId }?.commentCount ?: 0) + 1)
-                            ?: return@onSuccess
-                    )
+                    val current = _posts.value?.find { it.id == postId } ?: return@onSuccess
+                    updatePost(current.copy(commentCount = current.commentCount + 1))
                 }
                 .onFailure { _errorMessage.value = it.localizedMessage }
         }
@@ -97,7 +138,9 @@ class HomeViewModel(private val repository: HomePostRepository) : ViewModel() {
     fun onErrorShown() { _errorMessage.value = null }
 
     private fun updatePost(post: HomePost) {
-        _posts.value = _posts.value?.map { if (it.id == post.id) post else it }
+        val idx = allPosts.indexOfFirst { it.id == post.id }
+        if (idx != -1) allPosts[idx] = post
+        _posts.value = allPosts.toList()
     }
 
     class Factory(private val repository: HomePostRepository) : ViewModelProvider.Factory {

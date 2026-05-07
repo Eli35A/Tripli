@@ -17,6 +17,7 @@ import com.example.tripli.data.repository.HomePostRepository
 import com.example.tripli.databinding.ItemHomePostBinding
 import com.example.tripli.utils.CircleTransform
 import com.squareup.picasso.Picasso
+import java.io.File
 
 class HomePostAdapter(
     private val onLikeClick: (HomePost) -> Unit,

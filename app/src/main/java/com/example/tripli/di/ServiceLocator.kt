@@ -2,6 +2,7 @@ package com.example.tripli.di
 
 import android.content.Context
 import com.example.tripli.data.local.AppDatabase
+import com.example.tripli.data.local.ImageCacheManager
 import com.example.tripli.data.repository.FeaturedPostsRepository
 import com.example.tripli.data.repository.HomePostRepository
 import com.example.tripli.data.repository.UserRepository
@@ -34,10 +35,14 @@ object ServiceLocator {
         return FeaturedPostsRepository()
     }
 
-    fun provideHomePostRepository(): HomePostRepository {
+    fun provideHomePostRepository(context: Context): HomePostRepository {
+        val database = getDatabase(context)
+        val postDao = database.homePostDao()
         return HomePostRepository(
             firestore = FirebaseFirestore.getInstance(),
-            auth = FirebaseAuth.getInstance()
+            auth = FirebaseAuth.getInstance(),
+            postDao = postDao,
+            imageCacheManager = ImageCacheManager(context.applicationContext, postDao)
         )
     }
 }
