@@ -43,7 +43,7 @@ class AddPostFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val viewModel: AddPostViewModel by viewModels {
-        AddPostViewModel.Factory(ServiceLocator.provideHomePostRepository())
+        AddPostViewModel.Factory(ServiceLocator.provideHomePostRepository(requireContext()))
     }
 
     private var compressedImageBytes: ByteArray? = null
