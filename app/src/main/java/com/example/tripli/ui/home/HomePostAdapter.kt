@@ -1,7 +1,9 @@
 package com.example.tripli.ui.home
 
+import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
+import android.util.Base64
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
@@ -44,15 +46,20 @@ class HomePostAdapter(
             binding.userNameTextView.text = post.authorName
             binding.timeAgoTextView.text = post.timeAgo
 
-            val localFile = post.localImagePath?.let { File(it) }?.takeIf { it.exists() }
-            val imageRequest = if (localFile != null) {
-                Picasso.get().load(localFile)
+            if (post.imageUrl.startsWith("data:image")) {
+                val b64 = post.imageUrl.substringAfter(",")
+                val bytes = Base64.decode(b64, Base64.NO_WRAP)
+                binding.postImageView.setImageBitmap(
+                    BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                )
             } else {
-                Picasso.get().load(post.imageUrl.ifBlank { null })
+                Picasso.get()
+                    .load(post.imageUrl.ifBlank { null })
+                    .fit()
+                    .centerCrop()
+                    .placeholder(R.color.screenBackground)
+                    .into(binding.postImageView)
             }
-            imageRequest.fit().centerCrop()
-                .placeholder(R.color.screenBackground)
-                .into(binding.postImageView)
 
             binding.ratingTextView.text = String.format("%.1f", post.rating)
             binding.locationTextView.text = post.location
@@ -118,7 +125,11 @@ class HomePostAdapter(
         }
 
         private fun formatCount(count: Int): String =
-            if (count >= 1000) String.format("%.1fk", count / 1000.0) else count.toString()
+            if (count >= COUNT_THRESHOLD) String.format("%.1fk", count / COUNT_THRESHOLD.toDouble()) else count.toString()
+    }
+
+    companion object {
+        private const val COUNT_THRESHOLD = 1000
     }
 
     class DiffCallback : DiffUtil.ItemCallback<HomePost>() {

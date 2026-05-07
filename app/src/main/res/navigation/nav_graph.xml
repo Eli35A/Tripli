@@ -33,12 +33,16 @@
 
     <fragment
         android:id="@+id/addPostFragment"
-        android:name="com.example.tripli.ui.PlaceholderFragment"
+        android:name="com.example.tripli.ui.addpost.AddPostFragment"
         android:label="Add Post"
-        tools:layout="@layout/fragment_placeholder">
-        <argument
-            android:name="title"
-            android:defaultValue="Add Post" />
+        tools:layout="@layout/fragment_add_post">
+
+        <action
+            android:id="@+id/action_addPostFragment_to_homeFragment"
+            app:destination="@id/homeFragment"
+            app:launchSingleTop="true"
+            app:popUpTo="@id/addPostFragment"
+            app:popUpToInclusive="true" />
     </fragment>
 
     <fragment

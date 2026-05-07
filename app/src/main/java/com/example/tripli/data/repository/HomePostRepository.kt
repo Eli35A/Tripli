@@ -1,5 +1,6 @@
 package com.example.tripli.data.repository
 
+import android.util.Base64
 import com.example.tripli.data.local.HomePostDao
 import com.example.tripli.data.local.HomePostEntity
 import com.example.tripli.data.local.ImageCacheManager
@@ -191,6 +192,31 @@ class HomePostRepository(
                 timeAgo = TimeUtils.timeAgo(createdAt)
             )
         }
+    }
+
+    suspend fun createPost(imageBytes: ByteArray?, location: String, rating: Float, caption: String, hashtags: List<String>) {
+        val user = auth.currentUser ?: error("Not authenticated")
+
+        val imageUrl = if (imageBytes != null) {
+            "data:image/jpeg;base64," + Base64.encodeToString(imageBytes, Base64.NO_WRAP)
+        } else ""
+
+        firestore.collection(POSTS).add(
+            mapOf(
+                "authorId" to user.uid,
+                "authorName" to (user.displayName ?: "Anonymous"),
+                "authorPhotoUrl" to (user.photoUrl?.toString() ?: ""),
+                "location" to location,
+                "title" to location,
+                "rating" to rating.toDouble(),
+                "caption" to caption,
+                "hashtags" to hashtags,
+                "imageUrl" to imageUrl,
+                "likeCount" to 0L,
+                "commentCount" to 0L,
+                "createdAt" to FieldValue.serverTimestamp()
+            )
+        ).await()
     }
 
     suspend fun addComment(postId: String, text: String): Comment {
