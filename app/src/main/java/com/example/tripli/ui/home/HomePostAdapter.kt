@@ -17,12 +17,13 @@ import com.example.tripli.data.repository.HomePostRepository
 import com.example.tripli.databinding.ItemHomePostBinding
 import com.example.tripli.utils.CircleTransform
 import com.squareup.picasso.Picasso
-import java.io.File
 
 class HomePostAdapter(
+    private val currentUserId: String?,
     private val onLikeClick: (HomePost) -> Unit,
     private val onSaveClick: (HomePost) -> Unit,
-    private val onCommentClick: (HomePost) -> Unit
+    private val onCommentClick: (HomePost) -> Unit,
+    private val onMoreClick: (HomePost) -> Unit
 ) : ListAdapter<HomePost, HomePostAdapter.ViewHolder>(DiffCallback()) {
 
     private val circleTransform = CircleTransform()
@@ -75,6 +76,12 @@ class HomePostAdapter(
             binding.likeButton.setOnClickListener { onLikeClick(post) }
             binding.bookmarkButton.setOnClickListener { onSaveClick(post) }
             binding.commentButton.setOnClickListener { onCommentClick(post) }
+
+            val isOwner = currentUserId != null && post.authorId == currentUserId
+            binding.moreButton.isVisible = isOwner
+            if (isOwner) {
+                binding.moreButton.setOnClickListener { onMoreClick(post) }
+            }
         }
 
         private fun bindAvatar(post: HomePost) {

@@ -31,4 +31,10 @@ interface HomePostDao {
 
     @Query("DELETE FROM home_posts WHERE cachedAt < :threshold")
     suspend fun evictOldEntries(threshold: Long)
+
+    @Query("DELETE FROM home_posts WHERE id = :id")
+    suspend fun deleteById(id: String)
+
+    @Query("UPDATE home_posts SET location = :location, title = :location, rating = :rating, caption = :caption, hashtags = :hashtags, imageUrl = :imageUrl WHERE id = :id")
+    suspend fun updatePost(id: String, location: String, rating: Float, caption: String, hashtags: String, imageUrl: String)
 }

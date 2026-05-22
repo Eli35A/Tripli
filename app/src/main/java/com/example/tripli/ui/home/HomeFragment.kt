@@ -4,14 +4,20 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.app.AlertDialog
+import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.tripli.R
 import com.example.tripli.databinding.FragmentHomeBinding
 import com.example.tripli.di.ServiceLocator
+import com.example.tripli.ui.common.PostOptionsBottomSheetFragment
+import com.example.tripli.ui.editpost.EditPostFragment
 import com.google.android.material.snackbar.Snackbar
 
 class HomeFragment : Fragment() {
@@ -38,6 +44,44 @@ class HomeFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         setupRecyclerView()
         observeViewModel()
+
+        // Bottom sheet is shown via childFragmentManager, so listen on childFragmentManager
+        childFragmentManager.setFragmentResultListener(PostOptionsBottomSheetFragment.RESULT_EDIT, viewLifecycleOwner) { _, bundle ->
+            findNavController().navigate(
+                R.id.editPostFragment,
+                bundleOf(
+                    EditPostFragment.ARG_POST_ID to bundle.getString(PostOptionsBottomSheetFragment.ARG_POST_ID),
+                    EditPostFragment.ARG_LOCATION to bundle.getString(PostOptionsBottomSheetFragment.ARG_LOCATION),
+                    EditPostFragment.ARG_RATING to bundle.getFloat(PostOptionsBottomSheetFragment.ARG_RATING),
+                    EditPostFragment.ARG_CAPTION to bundle.getString(PostOptionsBottomSheetFragment.ARG_CAPTION),
+                    EditPostFragment.ARG_HASHTAGS to bundle.getString(PostOptionsBottomSheetFragment.ARG_HASHTAGS),
+                    EditPostFragment.ARG_IMAGE_URL to bundle.getString(PostOptionsBottomSheetFragment.ARG_IMAGE_URL)
+                )
+            )
+        }
+
+        childFragmentManager.setFragmentResultListener(PostOptionsBottomSheetFragment.RESULT_DELETE, viewLifecycleOwner) { _, bundle ->
+            val postId = bundle.getString(PostOptionsBottomSheetFragment.ARG_POST_ID) ?: return@setFragmentResultListener
+            val post = viewModel.posts.value?.find { it.id == postId } ?: return@setFragmentResultListener
+            AlertDialog.Builder(requireContext())
+                .setTitle("Delete Post")
+                .setMessage("Are you sure you want to delete this post?")
+                .setPositiveButton("Delete") { _, _ -> viewModel.deletePost(post) }
+                .setNegativeButton("Cancel", null)
+                .show()
+        }
+
+        // EditPostFragment is a nav sibling, so its result arrives on parentFragmentManager
+        setFragmentResultListener(EditPostFragment.RESULT_KEY) { _, bundle ->
+            val postId = bundle.getString(EditPostFragment.RESULT_POST_ID) ?: return@setFragmentResultListener
+            val imageUrl = bundle.getString(EditPostFragment.RESULT_IMAGE_URL) ?: ""
+            val location = bundle.getString(EditPostFragment.RESULT_LOCATION) ?: ""
+            val rating = bundle.getFloat(EditPostFragment.RESULT_RATING)
+            val caption = bundle.getString(EditPostFragment.RESULT_CAPTION) ?: ""
+            val hashtags = bundle.getString(EditPostFragment.RESULT_HASHTAGS)
+                ?.split("|")?.filter { it.isNotBlank() } ?: emptyList()
+            viewModel.onPostUpdated(postId, imageUrl, location, rating, caption, hashtags)
+        }
     }
 
     override fun onDestroyView() {
@@ -48,11 +92,22 @@ class HomeFragment : Fragment() {
 
     private fun setupRecyclerView() {
         adapter = HomePostAdapter(
+            currentUserId = viewModel.currentUserId,
             onLikeClick = viewModel::onLikeToggled,
             onSaveClick = viewModel::onSaveToggled,
             onCommentClick = { post ->
                 CommentBottomSheetFragment.newInstance(post.id)
                     .show(childFragmentManager, CommentBottomSheetFragment.TAG)
+            },
+            onMoreClick = { post ->
+                PostOptionsBottomSheetFragment.newInstance(
+                    postId = post.id,
+                    location = post.location,
+                    rating = post.rating,
+                    caption = post.caption,
+                    hashtags = post.hashtags.joinToString("|"),
+                    imageUrl = post.imageUrl
+                ).show(childFragmentManager, PostOptionsBottomSheetFragment.TAG)
             }
         )
 
@@ -63,7 +118,6 @@ class HomeFragment : Fragment() {
             setHasFixedSize(false)
         }
 
-        // Paginated loading: trigger next page when 3 items from the end
         binding.homeRecyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 if (dy <= 0) return

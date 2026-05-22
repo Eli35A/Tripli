@@ -279,6 +279,30 @@ class HomePostRepository(
         ).await()
     }
 
+    fun getCurrentUserId(): String? = auth.currentUser?.uid
+
+    suspend fun deletePost(postId: String) {
+        firestore.collection(POSTS).document(postId).delete().await()
+        postDao.deleteById(postId)
+    }
+
+    suspend fun updatePost(postId: String, imageBytes: ByteArray?, existingImageUrl: String, location: String, rating: Float, caption: String, hashtags: List<String>) {
+        val finalImageUrl = if (imageBytes != null)
+            "data:image/jpeg;base64," + Base64.encodeToString(imageBytes, Base64.NO_WRAP)
+        else existingImageUrl
+
+        val updates = mutableMapOf<String, Any>(
+            "location" to location,
+            "title" to location,
+            "rating" to rating.toDouble(),
+            "caption" to caption,
+            "hashtags" to hashtags
+        )
+        if (imageBytes != null) updates["imageUrl"] = finalImageUrl
+        firestore.collection(POSTS).document(postId).update(updates).await()
+        postDao.updatePost(postId, location, rating, caption, hashtags.joinToString("|"), finalImageUrl)
+    }
+
     suspend fun addComment(postId: String, text: String): Comment {
         val user = auth.currentUser ?: error("Not authenticated")
         val postRef = firestore.collection(POSTS).document(postId)

@@ -2,6 +2,7 @@ package com.example.tripli.ui.profile
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -11,7 +12,8 @@ import com.squareup.picasso.Picasso
 import java.io.File
 
 class ProfilePostAdapter(
-    private val onPostClick: (HomePost) -> Unit
+    private val onPostClick: (HomePost) -> Unit,
+    private val onMoreClick: ((HomePost) -> Unit)? = null
 ) : ListAdapter<HomePost, ProfilePostAdapter.ViewHolder>(DIFF) {
 
     inner class ViewHolder(private val binding: ItemProfilePostBinding) :
@@ -25,6 +27,9 @@ class ProfilePostAdapter(
                 Picasso.get().load(post.imageUrl.ifBlank { null })
             request.fit().centerCrop().into(binding.postThumbnail)
             binding.root.setOnClickListener { onPostClick(post) }
+
+            binding.moreButton.isVisible = onMoreClick != null
+            binding.moreButton.setOnClickListener { onMoreClick?.invoke(post) }
         }
     }
 

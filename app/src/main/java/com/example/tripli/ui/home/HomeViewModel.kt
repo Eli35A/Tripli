@@ -135,6 +135,39 @@ class HomeViewModel(private val repository: HomePostRepository) : ViewModel() {
         }
     }
 
+    val currentUserId: String? get() = repository.getCurrentUserId()
+
+    fun deletePost(post: HomePost) {
+        val idx = allPosts.indexOfFirst { it.id == post.id }
+        if (idx == -1) return
+        allPosts.removeAt(idx)
+        _posts.value = allPosts.toList()
+        viewModelScope.launch {
+            runCatching { repository.deletePost(post.id) }
+                .onFailure {
+                    allPosts.add(idx.coerceAtMost(allPosts.size), post)
+                    _posts.value = allPosts.toList()
+                    _errorMessage.value = it.localizedMessage
+                }
+        }
+    }
+
+    fun onPostUpdated(postId: String, imageUrl: String, location: String, rating: Float, caption: String, hashtags: List<String>) {
+        val idx = allPosts.indexOfFirst { it.id == postId }
+        if (idx == -1) return
+        val current = allPosts[idx]
+        allPosts[idx] = current.copy(
+            imageUrl = imageUrl,
+            localImagePath = if (imageUrl != current.imageUrl) null else current.localImagePath,
+            location = location,
+            title = location,
+            rating = rating,
+            caption = caption,
+            hashtags = hashtags
+        )
+        _posts.value = allPosts.toList()
+    }
+
     fun onErrorShown() { _errorMessage.value = null }
 
     private fun updatePost(post: HomePost) {
