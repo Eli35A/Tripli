@@ -4,13 +4,16 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.app.AlertDialog
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
 import com.example.tripli.R
 import com.example.tripli.databinding.FragmentMyPostsBinding
+import com.example.tripli.ui.common.PostOptionsBottomSheetFragment
 import com.example.tripli.ui.editpost.EditPostFragment
 
 class MyPostsFragment : Fragment() {
@@ -29,25 +32,46 @@ class MyPostsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         adapter = ProfilePostAdapter(
             onPostClick = { },
-            onEditClick = { post ->
-                requireParentFragment().findNavController().navigate(
-                    R.id.editPostFragment,
-                    bundleOf(
-                        EditPostFragment.ARG_POST_ID to post.id,
-                        EditPostFragment.ARG_LOCATION to post.location,
-                        EditPostFragment.ARG_RATING to post.rating,
-                        EditPostFragment.ARG_CAPTION to post.caption,
-                        EditPostFragment.ARG_HASHTAGS to post.hashtags.joinToString("|"),
-                        EditPostFragment.ARG_IMAGE_URL to post.imageUrl
-                    )
-                )
-            },
-            onDeleteClick = { post -> viewModel.deletePost(post) }
+            onMoreClick = { post ->
+                PostOptionsBottomSheetFragment.newInstance(
+                    postId = post.id,
+                    location = post.location,
+                    rating = post.rating,
+                    caption = post.caption,
+                    hashtags = post.hashtags.joinToString("|"),
+                    imageUrl = post.imageUrl
+                ).show(childFragmentManager, PostOptionsBottomSheetFragment.TAG)
+            }
         )
         binding.postsRecyclerView.layoutManager = GridLayoutManager(requireContext(), 2)
         binding.postsRecyclerView.adapter = adapter
 
         binding.swipeRefresh.setOnRefreshListener { viewModel.refreshMyPosts() }
+
+        setFragmentResultListener(PostOptionsBottomSheetFragment.RESULT_EDIT) { _, bundle ->
+            requireParentFragment().findNavController().navigate(
+                R.id.editPostFragment,
+                bundleOf(
+                    EditPostFragment.ARG_POST_ID to bundle.getString(PostOptionsBottomSheetFragment.ARG_POST_ID),
+                    EditPostFragment.ARG_LOCATION to bundle.getString(PostOptionsBottomSheetFragment.ARG_LOCATION),
+                    EditPostFragment.ARG_RATING to bundle.getFloat(PostOptionsBottomSheetFragment.ARG_RATING),
+                    EditPostFragment.ARG_CAPTION to bundle.getString(PostOptionsBottomSheetFragment.ARG_CAPTION),
+                    EditPostFragment.ARG_HASHTAGS to bundle.getString(PostOptionsBottomSheetFragment.ARG_HASHTAGS),
+                    EditPostFragment.ARG_IMAGE_URL to bundle.getString(PostOptionsBottomSheetFragment.ARG_IMAGE_URL)
+                )
+            )
+        }
+
+        setFragmentResultListener(PostOptionsBottomSheetFragment.RESULT_DELETE) { _, bundle ->
+            val postId = bundle.getString(PostOptionsBottomSheetFragment.ARG_POST_ID) ?: return@setFragmentResultListener
+            val post = viewModel.myPosts.value?.find { it.id == postId } ?: return@setFragmentResultListener
+            AlertDialog.Builder(requireContext())
+                .setTitle("Delete Post")
+                .setMessage("Are you sure you want to delete this post?")
+                .setPositiveButton("Delete") { _, _ -> viewModel.deletePost(post) }
+                .setNegativeButton("Cancel", null)
+                .show()
+        }
 
         viewModel.myPosts.observe(viewLifecycleOwner) { posts ->
             adapter.submitList(posts)

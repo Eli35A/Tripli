@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.app.AlertDialog
 import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -15,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.tripli.R
 import com.example.tripli.databinding.FragmentHomeBinding
 import com.example.tripli.di.ServiceLocator
+import com.example.tripli.ui.common.PostOptionsBottomSheetFragment
 import com.example.tripli.ui.editpost.EditPostFragment
 import com.google.android.material.snackbar.Snackbar
 
@@ -42,6 +44,32 @@ class HomeFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         setupRecyclerView()
         observeViewModel()
+
+        setFragmentResultListener(PostOptionsBottomSheetFragment.RESULT_EDIT) { _, bundle ->
+            findNavController().navigate(
+                R.id.editPostFragment,
+                bundleOf(
+                    EditPostFragment.ARG_POST_ID to bundle.getString(PostOptionsBottomSheetFragment.ARG_POST_ID),
+                    EditPostFragment.ARG_LOCATION to bundle.getString(PostOptionsBottomSheetFragment.ARG_LOCATION),
+                    EditPostFragment.ARG_RATING to bundle.getFloat(PostOptionsBottomSheetFragment.ARG_RATING),
+                    EditPostFragment.ARG_CAPTION to bundle.getString(PostOptionsBottomSheetFragment.ARG_CAPTION),
+                    EditPostFragment.ARG_HASHTAGS to bundle.getString(PostOptionsBottomSheetFragment.ARG_HASHTAGS),
+                    EditPostFragment.ARG_IMAGE_URL to bundle.getString(PostOptionsBottomSheetFragment.ARG_IMAGE_URL)
+                )
+            )
+        }
+
+        setFragmentResultListener(PostOptionsBottomSheetFragment.RESULT_DELETE) { _, bundle ->
+            val postId = bundle.getString(PostOptionsBottomSheetFragment.ARG_POST_ID) ?: return@setFragmentResultListener
+            val post = viewModel.posts.value?.find { it.id == postId } ?: return@setFragmentResultListener
+            AlertDialog.Builder(requireContext())
+                .setTitle("Delete Post")
+                .setMessage("Are you sure you want to delete this post?")
+                .setPositiveButton("Delete") { _, _ -> viewModel.deletePost(post) }
+                .setNegativeButton("Cancel", null)
+                .show()
+        }
+
         setFragmentResultListener(EditPostFragment.RESULT_KEY) { _, bundle ->
             val postId = bundle.getString(EditPostFragment.RESULT_POST_ID) ?: return@setFragmentResultListener
             val imageUrl = bundle.getString(EditPostFragment.RESULT_IMAGE_URL) ?: ""
@@ -69,20 +97,16 @@ class HomeFragment : Fragment() {
                 CommentBottomSheetFragment.newInstance(post.id)
                     .show(childFragmentManager, CommentBottomSheetFragment.TAG)
             },
-            onEditClick = { post ->
-                findNavController().navigate(
-                    R.id.editPostFragment,
-                    bundleOf(
-                        EditPostFragment.ARG_POST_ID to post.id,
-                        EditPostFragment.ARG_LOCATION to post.location,
-                        EditPostFragment.ARG_RATING to post.rating,
-                        EditPostFragment.ARG_CAPTION to post.caption,
-                        EditPostFragment.ARG_HASHTAGS to post.hashtags.joinToString("|"),
-                        EditPostFragment.ARG_IMAGE_URL to post.imageUrl
-                    )
-                )
-            },
-            onDeleteClick = { post -> viewModel.deletePost(post) }
+            onMoreClick = { post ->
+                PostOptionsBottomSheetFragment.newInstance(
+                    postId = post.id,
+                    location = post.location,
+                    rating = post.rating,
+                    caption = post.caption,
+                    hashtags = post.hashtags.joinToString("|"),
+                    imageUrl = post.imageUrl
+                ).show(childFragmentManager, PostOptionsBottomSheetFragment.TAG)
+            }
         )
 
         val layoutManager = LinearLayoutManager(requireContext())

@@ -6,8 +6,6 @@ import android.graphics.drawable.GradientDrawable
 import android.util.Base64
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import android.widget.PopupMenu
-import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
@@ -25,8 +23,7 @@ class HomePostAdapter(
     private val onLikeClick: (HomePost) -> Unit,
     private val onSaveClick: (HomePost) -> Unit,
     private val onCommentClick: (HomePost) -> Unit,
-    private val onEditClick: (HomePost) -> Unit,
-    private val onDeleteClick: (HomePost) -> Unit
+    private val onMoreClick: (HomePost) -> Unit
 ) : ListAdapter<HomePost, HomePostAdapter.ViewHolder>(DiffCallback()) {
 
     private val circleTransform = CircleTransform()
@@ -83,28 +80,7 @@ class HomePostAdapter(
             val isOwner = currentUserId != null && post.authorId == currentUserId
             binding.moreButton.isVisible = isOwner
             if (isOwner) {
-                binding.moreButton.setOnClickListener { v ->
-                    PopupMenu(v.context, v).apply {
-                        menu.add(0, MENU_EDIT, 0, "Edit")
-                        menu.add(0, MENU_DELETE, 1, "Delete")
-                        setOnMenuItemClickListener { item ->
-                            when (item.itemId) {
-                                MENU_EDIT -> { onEditClick(post); true }
-                                MENU_DELETE -> {
-                                    AlertDialog.Builder(v.context)
-                                        .setTitle("Delete Post")
-                                        .setMessage("Are you sure you want to delete this post?")
-                                        .setPositiveButton("Delete") { _, _ -> onDeleteClick(post) }
-                                        .setNegativeButton("Cancel", null)
-                                        .show()
-                                    true
-                                }
-                                else -> false
-                            }
-                        }
-                        show()
-                    }
-                }
+                binding.moreButton.setOnClickListener { onMoreClick(post) }
             }
         }
 
@@ -161,8 +137,6 @@ class HomePostAdapter(
 
     companion object {
         private const val COUNT_THRESHOLD = 1000
-        private const val MENU_EDIT = 1
-        private const val MENU_DELETE = 2
     }
 
     class DiffCallback : DiffUtil.ItemCallback<HomePost>() {
