@@ -6,6 +6,8 @@ import android.graphics.drawable.GradientDrawable
 import android.util.Base64
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.widget.PopupMenu
+import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
@@ -17,12 +19,14 @@ import com.example.tripli.data.repository.HomePostRepository
 import com.example.tripli.databinding.ItemHomePostBinding
 import com.example.tripli.utils.CircleTransform
 import com.squareup.picasso.Picasso
-import java.io.File
 
 class HomePostAdapter(
+    private val currentUserId: String?,
     private val onLikeClick: (HomePost) -> Unit,
     private val onSaveClick: (HomePost) -> Unit,
-    private val onCommentClick: (HomePost) -> Unit
+    private val onCommentClick: (HomePost) -> Unit,
+    private val onEditClick: (HomePost) -> Unit,
+    private val onDeleteClick: (HomePost) -> Unit
 ) : ListAdapter<HomePost, HomePostAdapter.ViewHolder>(DiffCallback()) {
 
     private val circleTransform = CircleTransform()
@@ -75,6 +79,33 @@ class HomePostAdapter(
             binding.likeButton.setOnClickListener { onLikeClick(post) }
             binding.bookmarkButton.setOnClickListener { onSaveClick(post) }
             binding.commentButton.setOnClickListener { onCommentClick(post) }
+
+            val isOwner = currentUserId != null && post.authorId == currentUserId
+            binding.moreButton.isVisible = isOwner
+            if (isOwner) {
+                binding.moreButton.setOnClickListener { v ->
+                    PopupMenu(v.context, v).apply {
+                        menu.add(0, MENU_EDIT, 0, "Edit")
+                        menu.add(0, MENU_DELETE, 1, "Delete")
+                        setOnMenuItemClickListener { item ->
+                            when (item.itemId) {
+                                MENU_EDIT -> { onEditClick(post); true }
+                                MENU_DELETE -> {
+                                    AlertDialog.Builder(v.context)
+                                        .setTitle("Delete Post")
+                                        .setMessage("Are you sure you want to delete this post?")
+                                        .setPositiveButton("Delete") { _, _ -> onDeleteClick(post) }
+                                        .setNegativeButton("Cancel", null)
+                                        .show()
+                                    true
+                                }
+                                else -> false
+                            }
+                        }
+                        show()
+                    }
+                }
+            }
         }
 
         private fun bindAvatar(post: HomePost) {
@@ -130,6 +161,8 @@ class HomePostAdapter(
 
     companion object {
         private const val COUNT_THRESHOLD = 1000
+        private const val MENU_EDIT = 1
+        private const val MENU_DELETE = 2
     }
 
     class DiffCallback : DiffUtil.ItemCallback<HomePost>() {

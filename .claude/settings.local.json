@@ -4,7 +4,9 @@
       "Bash(./gradlew assembleDebug)",
       "Bash(cmd /c \"gradlew.bat assembleDebug 2>&1\")",
       "Bash(cmd /c \"gradlew.bat assembleDebug\")",
-      "Bash(cmd.exe *)"
+      "Bash(cmd.exe *)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)"
     ]
   }
 }

@@ -23,7 +23,7 @@ class LikedPostsFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        adapter = ProfilePostAdapter { }
+        adapter = ProfilePostAdapter(onPostClick = { })
         binding.postsRecyclerView.layoutManager = GridLayoutManager(requireContext(), 2)
         binding.postsRecyclerView.adapter = adapter
 

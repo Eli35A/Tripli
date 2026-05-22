@@ -4,14 +4,18 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.tripli.R
 import com.example.tripli.databinding.FragmentHomeBinding
 import com.example.tripli.di.ServiceLocator
+import com.example.tripli.ui.editpost.EditPostFragment
 import com.google.android.material.snackbar.Snackbar
 
 class HomeFragment : Fragment() {
@@ -38,6 +42,16 @@ class HomeFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         setupRecyclerView()
         observeViewModel()
+        setFragmentResultListener(EditPostFragment.RESULT_KEY) { _, bundle ->
+            val postId = bundle.getString(EditPostFragment.RESULT_POST_ID) ?: return@setFragmentResultListener
+            val imageUrl = bundle.getString(EditPostFragment.RESULT_IMAGE_URL) ?: ""
+            val location = bundle.getString(EditPostFragment.RESULT_LOCATION) ?: ""
+            val rating = bundle.getFloat(EditPostFragment.RESULT_RATING)
+            val caption = bundle.getString(EditPostFragment.RESULT_CAPTION) ?: ""
+            val hashtags = bundle.getString(EditPostFragment.RESULT_HASHTAGS)
+                ?.split("|")?.filter { it.isNotBlank() } ?: emptyList()
+            viewModel.onPostUpdated(postId, imageUrl, location, rating, caption, hashtags)
+        }
     }
 
     override fun onDestroyView() {
@@ -48,12 +62,27 @@ class HomeFragment : Fragment() {
 
     private fun setupRecyclerView() {
         adapter = HomePostAdapter(
+            currentUserId = viewModel.currentUserId,
             onLikeClick = viewModel::onLikeToggled,
             onSaveClick = viewModel::onSaveToggled,
             onCommentClick = { post ->
                 CommentBottomSheetFragment.newInstance(post.id)
                     .show(childFragmentManager, CommentBottomSheetFragment.TAG)
-            }
+            },
+            onEditClick = { post ->
+                findNavController().navigate(
+                    R.id.editPostFragment,
+                    bundleOf(
+                        EditPostFragment.ARG_POST_ID to post.id,
+                        EditPostFragment.ARG_LOCATION to post.location,
+                        EditPostFragment.ARG_RATING to post.rating,
+                        EditPostFragment.ARG_CAPTION to post.caption,
+                        EditPostFragment.ARG_HASHTAGS to post.hashtags.joinToString("|"),
+                        EditPostFragment.ARG_IMAGE_URL to post.imageUrl
+                    )
+                )
+            },
+            onDeleteClick = { post -> viewModel.deletePost(post) }
         )
 
         val layoutManager = LinearLayoutManager(requireContext())
@@ -63,7 +92,6 @@ class HomeFragment : Fragment() {
             setHasFixedSize(false)
         }
 
-        // Paginated loading: trigger next page when 3 items from the end
         binding.homeRecyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 if (dy <= 0) return

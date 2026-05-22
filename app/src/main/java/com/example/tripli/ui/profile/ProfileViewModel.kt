@@ -104,6 +104,36 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    fun deletePost(post: HomePost) {
+        val uid = userRepo.getCurrentUserId() ?: return
+        val current = _myPosts.value?.toMutableList() ?: return
+        val idx = current.indexOfFirst { it.id == post.id }
+        if (idx == -1) return
+        current.removeAt(idx)
+        _myPosts.value = current.toList()
+        viewModelScope.launch {
+            runCatching { postRepo.deletePost(post.id) }
+                .onFailure { refreshMyPosts(uid) }
+        }
+    }
+
+    fun onPostUpdated(postId: String, imageUrl: String, location: String, rating: Float, caption: String, hashtags: List<String>) {
+        val current = _myPosts.value?.toMutableList() ?: return
+        val idx = current.indexOfFirst { it.id == postId }
+        if (idx == -1) return
+        val existing = current[idx]
+        current[idx] = existing.copy(
+            imageUrl = imageUrl,
+            localImagePath = if (imageUrl != existing.imageUrl) null else existing.localImagePath,
+            location = location,
+            title = location,
+            rating = rating,
+            caption = caption,
+            hashtags = hashtags
+        )
+        _myPosts.value = current.toList()
+    }
+
     fun signOut() {
         viewModelScope.launch {
             userRepo.signOut()
