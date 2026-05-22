@@ -9,7 +9,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [AppUserEntity::class, HomePostEntity::class],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -20,8 +20,8 @@ abstract class AppDatabase : RoomDatabase() {
     companion object {
 
         private val MIGRATION_1_2 = object : Migration(1, 2) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL(
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
                     """
                     CREATE TABLE IF NOT EXISTS `home_posts` (
                         `id` TEXT NOT NULL,
@@ -48,9 +48,16 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `users` ADD COLUMN `localPhotoPath` TEXT")
+                db.execSQL("ALTER TABLE `users` ADD COLUMN `bio` TEXT")
+            }
+        }
+
         fun build(context: Context): AppDatabase {
             return Room.databaseBuilder(context, AppDatabase::class.java, "tripli.db")
-                .addMigrations(MIGRATION_1_2)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                 .build()
         }
     }
