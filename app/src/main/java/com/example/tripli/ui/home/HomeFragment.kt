@@ -45,7 +45,8 @@ class HomeFragment : Fragment() {
         setupRecyclerView()
         observeViewModel()
 
-        setFragmentResultListener(PostOptionsBottomSheetFragment.RESULT_EDIT) { _, bundle ->
+        // Bottom sheet is shown via childFragmentManager, so listen on childFragmentManager
+        childFragmentManager.setFragmentResultListener(PostOptionsBottomSheetFragment.RESULT_EDIT, viewLifecycleOwner) { _, bundle ->
             findNavController().navigate(
                 R.id.editPostFragment,
                 bundleOf(
@@ -59,7 +60,7 @@ class HomeFragment : Fragment() {
             )
         }
 
-        setFragmentResultListener(PostOptionsBottomSheetFragment.RESULT_DELETE) { _, bundle ->
+        childFragmentManager.setFragmentResultListener(PostOptionsBottomSheetFragment.RESULT_DELETE, viewLifecycleOwner) { _, bundle ->
             val postId = bundle.getString(PostOptionsBottomSheetFragment.ARG_POST_ID) ?: return@setFragmentResultListener
             val post = viewModel.posts.value?.find { it.id == postId } ?: return@setFragmentResultListener
             AlertDialog.Builder(requireContext())
@@ -70,6 +71,7 @@ class HomeFragment : Fragment() {
                 .show()
         }
 
+        // EditPostFragment is a nav sibling, so its result arrives on parentFragmentManager
         setFragmentResultListener(EditPostFragment.RESULT_KEY) { _, bundle ->
             val postId = bundle.getString(EditPostFragment.RESULT_POST_ID) ?: return@setFragmentResultListener
             val imageUrl = bundle.getString(EditPostFragment.RESULT_IMAGE_URL) ?: ""

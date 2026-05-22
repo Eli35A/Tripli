@@ -48,7 +48,8 @@ class MyPostsFragment : Fragment() {
 
         binding.swipeRefresh.setOnRefreshListener { viewModel.refreshMyPosts() }
 
-        setFragmentResultListener(PostOptionsBottomSheetFragment.RESULT_EDIT) { _, bundle ->
+        // Bottom sheet is shown via childFragmentManager, so listen on childFragmentManager
+        childFragmentManager.setFragmentResultListener(PostOptionsBottomSheetFragment.RESULT_EDIT, viewLifecycleOwner) { _, bundle ->
             requireParentFragment().findNavController().navigate(
                 R.id.editPostFragment,
                 bundleOf(
@@ -62,7 +63,7 @@ class MyPostsFragment : Fragment() {
             )
         }
 
-        setFragmentResultListener(PostOptionsBottomSheetFragment.RESULT_DELETE) { _, bundle ->
+        childFragmentManager.setFragmentResultListener(PostOptionsBottomSheetFragment.RESULT_DELETE, viewLifecycleOwner) { _, bundle ->
             val postId = bundle.getString(PostOptionsBottomSheetFragment.ARG_POST_ID) ?: return@setFragmentResultListener
             val post = viewModel.myPosts.value?.find { it.id == postId } ?: return@setFragmentResultListener
             AlertDialog.Builder(requireContext())
