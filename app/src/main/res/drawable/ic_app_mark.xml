@@ -7,7 +7,7 @@
 
     <!-- Background circle -->
     <path
-        android:fillColor="#29B6F6"
+        android:fillColor="#39C4E7"
         android:strokeColor="#1E88E5"
         android:strokeWidth="2"
         android:pathData="
