@@ -12,6 +12,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
 import com.example.tripli.databinding.FragmentMyPostsBinding
 import com.example.tripli.features.common.PostOptionsBottomSheetFragment
+import com.example.tripli.model.HomePost
 
 class MyPostsFragment : Fragment() {
 
@@ -28,7 +29,7 @@ class MyPostsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         adapter = ProfilePostAdapter(
-            onPostClick = { },
+            onPostClick = { post -> navigateToPostDetail(post) },
             onMoreClick = { post ->
                 PostOptionsBottomSheetFragment.newInstance(
                     postId = post.id,
@@ -81,6 +82,26 @@ class MyPostsFragment : Fragment() {
             binding.loadingIndicator.visibility =
                 if (loading && adapter.itemCount == 0) View.VISIBLE else View.GONE
         }
+    }
+
+    private fun navigateToPostDetail(post: HomePost) {
+        requireParentFragment().findNavController().navigate(
+            ProfileFragmentDirections.actionProfileFragmentToPostDetailFragment(
+                postId = post.id,
+                authorId = post.authorId,
+                authorName = post.authorName,
+                authorPhotoUrl = post.authorPhotoUrl,
+                timeAgo = post.timeAgo,
+                imageUrl = post.imageUrl,
+                location = post.location,
+                rating = post.rating,
+                title = post.title,
+                caption = post.caption,
+                hashtags = post.hashtags.joinToString("|"),
+                likeCount = post.likeCount,
+                commentCount = post.commentCount
+            )
+        )
     }
 
     override fun onDestroyView() {

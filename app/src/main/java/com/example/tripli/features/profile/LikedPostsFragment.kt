@@ -7,7 +7,9 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.GridLayoutManager
+import androidx.navigation.fragment.findNavController
 import com.example.tripli.databinding.FragmentLikedPostsBinding
+import com.example.tripli.model.HomePost
 
 class LikedPostsFragment : Fragment() {
 
@@ -23,7 +25,7 @@ class LikedPostsFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        adapter = ProfilePostAdapter(onPostClick = { })
+        adapter = ProfilePostAdapter(onPostClick = { post -> navigateToPostDetail(post) })
         binding.postsRecyclerView.layoutManager = GridLayoutManager(requireContext(), 2)
         binding.postsRecyclerView.adapter = adapter
 
@@ -39,6 +41,26 @@ class LikedPostsFragment : Fragment() {
             binding.loadingIndicator.visibility =
                 if (loading && adapter.itemCount == 0) View.VISIBLE else View.GONE
         }
+    }
+
+    private fun navigateToPostDetail(post: HomePost) {
+        requireParentFragment().findNavController().navigate(
+            ProfileFragmentDirections.actionProfileFragmentToPostDetailFragment(
+                postId = post.id,
+                authorId = post.authorId,
+                authorName = post.authorName,
+                authorPhotoUrl = post.authorPhotoUrl,
+                timeAgo = post.timeAgo,
+                imageUrl = post.imageUrl,
+                location = post.location,
+                rating = post.rating,
+                title = post.title,
+                caption = post.caption,
+                hashtags = post.hashtags.joinToString("|"),
+                likeCount = post.likeCount,
+                commentCount = post.commentCount
+            )
+        )
     }
 
     override fun onDestroyView() {
