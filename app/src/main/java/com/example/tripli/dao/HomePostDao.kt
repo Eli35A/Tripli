@@ -37,4 +37,7 @@ interface HomePostDao {
 
     @Query("UPDATE home_posts SET location = :location, title = :location, rating = :rating, caption = :caption, hashtags = :hashtags, imageUrl = :imageUrl WHERE id = :id")
     suspend fun updatePost(id: String, location: String, rating: Float, caption: String, hashtags: String, imageUrl: String)
+
+    @Query("UPDATE home_posts SET authorPhotoUrl = :photoUrl WHERE authorId = :authorId")
+    suspend fun updateAuthorPhotoUrl(authorId: String, photoUrl: String)
 }

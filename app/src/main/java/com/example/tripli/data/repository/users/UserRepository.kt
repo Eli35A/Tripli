@@ -42,7 +42,20 @@ class UserRepository(
                     ?: error("Authentication succeeded but no user was returned.")
 
                 Log.d(TAG, "signInWithGoogle: firebase auth success for uid=${firebaseUser.uid}")
-                val appUser = firebaseUser.toAppUser()
+
+                val existingDoc = runCatching {
+                    firestore.collection(USERS_COLLECTION).document(firebaseUser.uid).get().await()
+                }.getOrNull()
+                val preservedPhotoUrl = existingDoc?.getString("photoUrl")
+                    ?.takeIf { it.isNotBlank() }
+                    ?: firebaseUser.photoUrl?.toString()
+
+                val appUser = AppUser(
+                    uid = firebaseUser.uid,
+                    displayName = firebaseUser.displayName.orEmpty().ifBlank { "Traveler" },
+                    email = firebaseUser.email,
+                    photoUrl = preservedPhotoUrl
+                )
 
                 saveLocalUser(appUser)
                 saveRemoteUser(appUser)
@@ -62,15 +75,17 @@ class UserRepository(
         }
     }
 
-    suspend fun updateProfile(uid: String, name: String, bio: String, localPhotoPath: String?) {
+    suspend fun updateProfile(uid: String, name: String, bio: String, localPhotoPath: String?, photoUrl: String?) {
         withContext(Dispatchers.IO) {
             val existing = userDao.getUserById(uid) ?: return@withContext
             userDao.upsert(existing.copy(
                 displayName = name,
                 bio = bio,
-                localPhotoPath = localPhotoPath ?: existing.localPhotoPath
+                localPhotoPath = localPhotoPath ?: existing.localPhotoPath,
+                photoUrl = photoUrl ?: existing.photoUrl
             ))
             val updates = mutableMapOf<String, Any>("displayName" to name, "bio" to bio)
+            if (photoUrl != null) updates["photoUrl"] = photoUrl
             firestore.collection(USERS_COLLECTION).document(uid).update(updates).await()
         }
     }
@@ -116,14 +131,13 @@ class UserRepository(
     }
 
     private suspend fun saveLocalUser(user: AppUser) {
-        // Preserve existing bio and localPhotoPath across sign-in refreshes
         val existing = userDao.getUserById(user.uid)
         userDao.upsert(
             AppUserEntity(
                 uid = user.uid,
                 displayName = user.displayName,
                 email = user.email,
-                photoUrl = user.photoUrl,
+                photoUrl = existing?.photoUrl ?: user.photoUrl,
                 localPhotoPath = existing?.localPhotoPath,
                 bio = existing?.bio,
                 lastLoginAt = System.currentTimeMillis()

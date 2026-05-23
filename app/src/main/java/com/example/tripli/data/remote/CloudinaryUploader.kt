@@ -7,16 +7,13 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-object CloudinaryUploader {
+class CloudinaryUploader {
 
-    const val CLOUD_NAME = "dthqh7un9"
-    private const val UPLOAD_PRESET = "tripli"
-
-    suspend fun upload(imageBytes: ByteArray): String = suspendCancellableCoroutine { cont ->
+    suspend fun upload(imageBytes: ByteArray, folder: String = "tripli/posts"): String = suspendCancellableCoroutine { cont ->
         MediaManager.get()
             .upload(imageBytes)
             .unsigned(UPLOAD_PRESET)
-            .option("folder", "tripli/posts")
+            .option("folder", folder)
             .callback(object : UploadCallback {
                 override fun onStart(requestId: String) {}
                 override fun onProgress(requestId: String, bytes: Long, totalBytes: Long) {}
@@ -33,5 +30,10 @@ object CloudinaryUploader {
                 }
             })
             .dispatch()
+    }
+
+    companion object {
+        const val CLOUD_NAME = "dthqh7un9"
+        private const val UPLOAD_PRESET = "tripli"
     }
 }

@@ -2,6 +2,7 @@ package com.example.tripli.features.profile
 
 import android.app.Application
 import android.content.Context
+import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
@@ -13,12 +14,14 @@ import com.example.tripli.base.ServiceLocator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
 import java.io.File
 
 class ProfileViewModel(application: Application) : AndroidViewModel(application) {
 
     private val userRepo = ServiceLocator.provideUserRepository(application)
     private val postRepo = ServiceLocator.provideHomePostRepository(application)
+    private val cloudinaryUploader = ServiceLocator.cloudinaryUploader
 
     private val _user = MutableLiveData<AppUser?>()
     val user: LiveData<AppUser?> = _user
@@ -145,11 +148,28 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         val uid = userRepo.getCurrentUserId() ?: return
         viewModelScope.launch {
             _isSaving.value = true
+            val cloudinaryUrl = photoUri?.let {
+                runCatching { uploadPhotoToCloudinary(it) }.getOrNull()
+            }
             val localPhotoPath = photoUri?.let { savePhotoLocally(it) }
-            userRepo.updateProfile(uid, name, bio, localPhotoPath)
+            userRepo.updateProfile(uid, name, bio, localPhotoPath, cloudinaryUrl)
+            if (cloudinaryUrl != null) {
+                runCatching { postRepo.updateAuthorPhotoOnPosts(uid, cloudinaryUrl) }
+            }
             _user.value = userRepo.getCachedCurrentUser()
             _isSaving.value = false
         }
+    }
+
+    private suspend fun uploadPhotoToCloudinary(uri: Uri): String = withContext(Dispatchers.IO) {
+        val ctx: Context = getApplication()
+        val bytes = ctx.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+            ?: error("Could not read photo URI")
+        val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+        val out = ByteArrayOutputStream()
+        bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 80, out)
+        bitmap.recycle()
+        cloudinaryUploader.upload(out.toByteArray(), folder = "tripli/profiles")
     }
 
     private suspend fun savePhotoLocally(uri: Uri): String? = withContext(Dispatchers.IO) {
