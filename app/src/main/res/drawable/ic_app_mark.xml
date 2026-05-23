@@ -8,7 +8,6 @@
     <!-- Background circle -->
     <path
         android:fillColor="#39C4E7"
-        android:strokeColor="#1E88E5"
         android:strokeWidth="2"
         android:pathData="
             M50,5
