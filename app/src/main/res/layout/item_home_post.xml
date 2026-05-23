@@ -231,15 +231,6 @@
                 android:textSize="13sp"
                 tools:text="45" />
 
-            <ImageButton
-                android:id="@+id/bookmarkButton"
-                android:layout_width="22dp"
-                android:layout_height="22dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Save"
-                android:src="@drawable/ic_bookmark_outline"
-                android:tint="@color/textSecondary" />
-
         </LinearLayout>
 
         <!-- Title -->

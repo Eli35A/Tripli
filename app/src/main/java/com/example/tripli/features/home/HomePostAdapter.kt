@@ -21,7 +21,6 @@ import com.squareup.picasso.Picasso
 class HomePostAdapter(
     private val currentUserId: String?,
     private val onLikeClick: (HomePost) -> Unit,
-    private val onSaveClick: (HomePost) -> Unit,
     private val onCommentClick: (HomePost) -> Unit,
     private val onMoreClick: (HomePost) -> Unit
 ) : ListAdapter<HomePost, HomePostAdapter.ViewHolder>(DiffCallback()) {
@@ -71,10 +70,8 @@ class HomePostAdapter(
             binding.commentCountTextView.text = formatCount(post.commentCount)
 
             updateLikeButton(post.isLiked)
-            updateBookmarkButton(post.isSaved)
 
             binding.likeButton.setOnClickListener { onLikeClick(post) }
-            binding.bookmarkButton.setOnClickListener { onSaveClick(post) }
             binding.commentButton.setOnClickListener { onCommentClick(post) }
 
             val isOwner = currentUserId != null && post.authorId == currentUserId
@@ -117,17 +114,6 @@ class HomePostAdapter(
             } else {
                 binding.likeButton.setImageResource(R.drawable.ic_heart)
                 binding.likeButton.setColorFilter(ContextCompat.getColor(context, R.color.textSecondary))
-            }
-        }
-
-        private fun updateBookmarkButton(isSaved: Boolean) {
-            val context = binding.root.context
-            if (isSaved) {
-                binding.bookmarkButton.setImageResource(R.drawable.ic_bookmark_filled)
-                binding.bookmarkButton.setColorFilter(ContextCompat.getColor(context, R.color.accentBlue))
-            } else {
-                binding.bookmarkButton.setImageResource(R.drawable.ic_bookmark_outline)
-                binding.bookmarkButton.setColorFilter(ContextCompat.getColor(context, R.color.textSecondary))
             }
         }
 

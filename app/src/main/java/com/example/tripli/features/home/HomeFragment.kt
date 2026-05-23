@@ -93,7 +93,6 @@ class HomeFragment : Fragment() {
         adapter = HomePostAdapter(
             currentUserId = viewModel.currentUserId,
             onLikeClick = viewModel::onLikeToggled,
-            onSaveClick = viewModel::onSaveToggled,
             onCommentClick = { post ->
                 CommentBottomSheetFragment.newInstance(post.id)
                     .show(childFragmentManager, CommentBottomSheetFragment.TAG)
