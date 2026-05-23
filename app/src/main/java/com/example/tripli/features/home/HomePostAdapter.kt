@@ -65,7 +65,7 @@ class HomePostAdapter(
             binding.locationTextView.text = post.location
             binding.titleTextView.text = post.title
             binding.captionTextView.text = post.caption
-            binding.hashtagsTextView.text = post.hashtags.joinToString(" ")
+            binding.hashtagsTextView.text = post.hashtags.joinToString(" ") { "#$it" }
             binding.likeCountTextView.text = formatCount(post.likeCount)
             binding.commentCountTextView.text = formatCount(post.commentCount)
 
