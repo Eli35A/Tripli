@@ -5,32 +5,29 @@
     android:viewportWidth="56"
     android:viewportHeight="56">
 
+    <!-- Camera body with viewfinder bump -->
     <path
         android:fillColor="#39C4E7"
-        android:pathData="M20,18l-3,4H10C8.34,22 7,23.34 7,25v18c0,1.66 1.34,3 3,3h36c1.66,0 3,-1.34 3,-3V25c0,-1.66 -1.34,-3 -3,-3h-7l-3,-4H20z" />
+        android:pathData="M21,16 L18,20 H10 C7.8,20 6,21.8 6,24 V42 C6,44.2 7.8,46 10,46 H46 C48.2,46 50,44.2 50,42 V24 C50,21.8 48.2,20 46,20 H38 L35,16 Z" />
 
+    <!-- Lens outer white ring -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M28,27m-8,0a8,8 0,1 1,16 0a8,8 0,1 1,-16 0" />
+        android:pathData="M28,33m-9,0a9,9 0,1 1,18 0a9,9 0,1 1,-18 0" />
 
+    <!-- Lens inner teal circle -->
     <path
         android:fillColor="#39C4E7"
-        android:pathData="M28,27m-5,0a5,5 0,1 1,10 0a5,5 0,1 1,-10 0" />
+        android:pathData="M28,33m-5.5,0a5.5,5.5 0,1 1,11 0a5.5,5.5 0,1 1,-11 0" />
 
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M42,8m-8,0a8,8 0,1 1,16 0a8,8 0,1 1,-16 0" />
-
+    <!-- "+" at top-right (vertical bar) -->
     <path
         android:fillColor="#39C4E7"
-        android:pathData="M42,8m-6,0a6,6 0,1 1,12 0a6,6 0,1 1,-12 0" />
+        android:pathData="M43,6 L45,6 L45,16 L43,16 Z" />
 
+    <!-- "+" at top-right (horizontal bar) -->
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M41,3 L43,3 L43,13 L41,13 Z" />
-
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M37,7 L47,7 L47,9 L37,9 Z" />
+        android:fillColor="#39C4E7"
+        android:pathData="M38,10 L50,10 L50,12 L38,12 Z" />
 
 </vector>
