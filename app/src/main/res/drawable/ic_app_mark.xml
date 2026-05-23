@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="30dp"
+    android:height="30dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+
+    <!-- Background circle -->
+    <path
+        android:fillColor="#39C4E7"
+        android:strokeWidth="2"
+        android:pathData="
+            M50,5
+            A45,45 0 1,1 50,95
+            A45,45 0 1,1 50,5
+        "/>
+
+    <!-- Icon (centered properly via normalized transform) -->
+    <group
+        android:translateX="18"
+        android:translateY="18"
+        android:scaleX="1.25"
+        android:scaleY="1.25">
+
+        <!-- Pre-centered icon:
+             original bounds ~ (0..60.67, 0..59.17)
+             so we shift by half -->
+        <group
+            android:translateX="-6"
+            android:translateY="-4">
+
+            <path
+                android:fillColor="#FFFFFF"
+                android:pathData="
+                    M60.67,42.67V36.67L36.67,21.67V5.17
+                    C36.67,2.31 34.36,0 31.5,0
+                    C28.64,0 26.33,2.31 26.33,5.17
+                    V21.67L2.33,36.67V42.67
+                    L26.33,35.17V51.67
+                    L21.33,55.42V59.17
+                    L31.5,56.67L41.67,59.17V55.42
+                    L36.67,51.67V35.17
+                    L60.67,42.67Z"/>
+        </group>
+
+    </group>
+
+</vector>

@@ -57,15 +57,13 @@
 
             <LinearLayout
                 android:id="@+id/userInfoLayout"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
-                android:layout_marginEnd="4dp"
                 android:orientation="vertical"
-                app:layout_constraintBottom_toBottomOf="@id/userInitialTextView"
-                app:layout_constraintEnd_toStartOf="@id/moreButton"
-                app:layout_constraintStart_toEndOf="@id/userInitialTextView"
-                app:layout_constraintTop_toTopOf="@id/userInitialTextView">
+                app:layout_constraintBottom_toBottomOf="@id/avatarContainer"
+                app:layout_constraintStart_toEndOf="@id/avatarContainer"
+                app:layout_constraintTop_toTopOf="@id/avatarContainer">
 
                 <TextView
                     android:id="@+id/userNameTextView"
@@ -230,15 +228,6 @@
                 android:textColor="@color/textSecondary"
                 android:textSize="13sp"
                 tools:text="45" />
-
-            <ImageButton
-                android:id="@+id/bookmarkButton"
-                android:layout_width="22dp"
-                android:layout_height="22dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Save"
-                android:src="@drawable/ic_bookmark_outline"
-                android:tint="@color/textSecondary" />
 
         </LinearLayout>
 
