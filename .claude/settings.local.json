@@ -21,7 +21,8 @@
       "Bash(xargs -0 sed -i -e 's|com\\\\.example\\\\.tripli\\\\.data\\\\.local\\\\.|com.example.tripli.dao.|g' -e 's|com\\\\.example\\\\.tripli\\\\.data\\\\.model\\\\.|com.example.tripli.model.|g')",
       "Bash(xargs -0 sed -i -e 's|com\\\\.example\\\\.tripli\\\\.ui\\\\.|com.example.tripli.features.|g')",
       "Bash(xargs -0 sed -i -e 's|com\\\\.example\\\\.tripli\\\\.di\\\\.ServiceLocator|com.example.tripli.base.ServiceLocator|g')",
-      "PowerShell(.\\\\gradlew.bat :app:compileDebugKotlin --console=plain 2>&1 | Select-Object -Last 80)"
+      "PowerShell(.\\\\gradlew.bat :app:compileDebugKotlin --console=plain 2>&1 | Select-Object -Last 80)",
+      "Bash(dir C:\\\\Users\\\\User\\\\Documents\\\\Tripli\\\\app\\\\src\\\\main\\\\res\\\\drawable *)"
     ]
   }
 }
