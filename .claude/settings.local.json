@@ -6,7 +6,23 @@
       "Bash(cmd /c \"gradlew.bat assembleDebug\")",
       "Bash(cmd.exe *)",
       "WebFetch(domain:github.com)",
-      "WebFetch(domain:raw.githubusercontent.com)"
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(gh api *)",
+      "PowerShell(gh api *)",
+      "WebFetch(domain:api.github.com)",
+      "Bash(cd *)",
+      "Bash(git mv *)",
+      "Bash(rmdir di *)",
+      "Bash([ -d \"features/$d/$d.tmp\" ])",
+      "Bash(rmdir features/__TRACKED_VAR__/__TRACKED_VAR__.tmp)",
+      "Bash(mv features/__TRACKED_VAR__/__TRACKED_VAR__.tmp/* features/__TRACKED_VAR__/)",
+      "Bash(git add *)",
+      "Bash(xargs -0 sed -i -e 's|com\\\\.example\\\\.tripli\\\\.data\\\\.repository\\\\.HomePostRepository|com.example.tripli.data.repository.posts.HomePostRepository|g' -e 's|com\\\\.example\\\\.tripli\\\\.data\\\\.repository\\\\.UserRepository|com.example.tripli.data.repository.users.UserRepository|g' -e 's|com\\\\.example\\\\.tripli\\\\.data\\\\.repository\\\\.FeaturedPostsRepository|com.example.tripli.data.repository.featured.FeaturedPostsRepository|g')",
+      "Bash(xargs -0 sed -i -e 's|com\\\\.example\\\\.tripli\\\\.data\\\\.local\\\\.|com.example.tripli.dao.|g' -e 's|com\\\\.example\\\\.tripli\\\\.data\\\\.model\\\\.|com.example.tripli.model.|g')",
+      "Bash(xargs -0 sed -i -e 's|com\\\\.example\\\\.tripli\\\\.ui\\\\.|com.example.tripli.features.|g')",
+      "Bash(xargs -0 sed -i -e 's|com\\\\.example\\\\.tripli\\\\.di\\\\.ServiceLocator|com.example.tripli.base.ServiceLocator|g')",
+      "PowerShell(.\\\\gradlew.bat :app:compileDebugKotlin --console=plain 2>&1 | Select-Object -Last 80)",
+      "Bash(dir C:\\\\Users\\\\User\\\\Documents\\\\Tripli\\\\app\\\\src\\\\main\\\\res\\\\drawable *)"
     ]
   }
 }
