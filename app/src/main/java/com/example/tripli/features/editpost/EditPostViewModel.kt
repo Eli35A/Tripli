@@ -19,6 +19,9 @@ class EditPostViewModel(private val repository: HomePostRepository) : ViewModel(
     private val _errorMessage = MutableLiveData<String?>(null)
     val errorMessage: LiveData<String?> = _errorMessage
 
+    private val _savedImageUrl = MutableLiveData<String?>()
+    val savedImageUrl: LiveData<String?> = _savedImageUrl
+
     fun savePost(postId: String, imageBytes: ByteArray?, existingImageUrl: String, location: String, rating: Float, caption: String, hashtags: List<String>) {
         if (location.isBlank()) { _errorMessage.value = "Please enter a destination"; return }
         if (rating == 0f) { _errorMessage.value = "Please rate your experience"; return }
@@ -28,7 +31,8 @@ class EditPostViewModel(private val repository: HomePostRepository) : ViewModel(
             _isSaving.value = true
             runCatching {
                 repository.updatePost(postId, imageBytes, existingImageUrl, location, rating, caption, hashtags)
-            }.onSuccess {
+            }.onSuccess { url ->
+                _savedImageUrl.value = url
                 _saveSuccess.value = true
             }.onFailure {
                 _errorMessage.value = it.localizedMessage ?: "Failed to save post"

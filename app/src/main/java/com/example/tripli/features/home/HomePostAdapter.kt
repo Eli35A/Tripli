@@ -1,9 +1,7 @@
 package com.example.tripli.features.home
 
-import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
-import android.util.Base64
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
@@ -46,20 +44,12 @@ class HomePostAdapter(
             binding.userNameTextView.text = post.authorName
             binding.timeAgoTextView.text = post.timeAgo
 
-            if (post.imageUrl.startsWith("data:image")) {
-                val b64 = post.imageUrl.substringAfter(",")
-                val bytes = Base64.decode(b64, Base64.NO_WRAP)
-                binding.postImageView.setImageBitmap(
-                    BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-                )
-            } else {
-                Picasso.get()
-                    .load(post.imageUrl.ifBlank { null })
-                    .fit()
-                    .centerCrop()
-                    .placeholder(R.color.screenBackground)
-                    .into(binding.postImageView)
-            }
+            Picasso.get()
+                .load(post.imageUrl.ifBlank { null })
+                .fit()
+                .centerCrop()
+                .placeholder(R.color.screenBackground)
+                .into(binding.postImageView)
 
             binding.ratingTextView.text = String.format("%.1f", post.rating)
             binding.locationTextView.text = post.location

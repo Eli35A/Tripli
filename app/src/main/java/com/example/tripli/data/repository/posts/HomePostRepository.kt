@@ -1,7 +1,7 @@
 package com.example.tripli.data.repository.posts
 
-import android.util.Base64
 import com.example.tripli.dao.HomePostDao
+import com.example.tripli.data.remote.CloudinaryUploader
 import com.example.tripli.dao.HomePostEntity
 import com.example.tripli.dao.ImageCacheManager
 import com.example.tripli.model.Comment
@@ -257,9 +257,7 @@ class HomePostRepository(
     suspend fun createPost(imageBytes: ByteArray?, location: String, rating: Float, caption: String, hashtags: List<String>) {
         val user = auth.currentUser ?: error("Not authenticated")
 
-        val imageUrl = if (imageBytes != null) {
-            "data:image/jpeg;base64," + Base64.encodeToString(imageBytes, Base64.NO_WRAP)
-        } else ""
+        val imageUrl = if (imageBytes != null) CloudinaryUploader.upload(imageBytes) else ""
 
         firestore.collection(POSTS).add(
             mapOf(
@@ -286,10 +284,8 @@ class HomePostRepository(
         postDao.deleteById(postId)
     }
 
-    suspend fun updatePost(postId: String, imageBytes: ByteArray?, existingImageUrl: String, location: String, rating: Float, caption: String, hashtags: List<String>) {
-        val finalImageUrl = if (imageBytes != null)
-            "data:image/jpeg;base64," + Base64.encodeToString(imageBytes, Base64.NO_WRAP)
-        else existingImageUrl
+    suspend fun updatePost(postId: String, imageBytes: ByteArray?, existingImageUrl: String, location: String, rating: Float, caption: String, hashtags: List<String>): String {
+        val finalImageUrl = if (imageBytes != null) CloudinaryUploader.upload(imageBytes) else existingImageUrl
 
         val updates = mutableMapOf<String, Any>(
             "location" to location,
@@ -301,6 +297,7 @@ class HomePostRepository(
         if (imageBytes != null) updates["imageUrl"] = finalImageUrl
         firestore.collection(POSTS).document(postId).update(updates).await()
         postDao.updatePost(postId, location, rating, caption, hashtags.joinToString("|"), finalImageUrl)
+        return finalImageUrl
     }
 
     suspend fun addComment(postId: String, text: String): Comment {
