@@ -3,6 +3,7 @@ package com.example.tripli.base
 import android.content.Context
 import com.example.tripli.dao.AppDatabase
 import com.example.tripli.dao.ImageCacheManager
+import com.example.tripli.data.remote.CloudinaryUploader
 import com.example.tripli.data.repository.featured.FeaturedPostsRepository
 import com.example.tripli.data.repository.posts.HomePostRepository
 import com.example.tripli.data.repository.users.UserRepository
@@ -13,6 +14,8 @@ object ServiceLocator {
 
     @Volatile
     private var database: AppDatabase? = null
+
+    val cloudinaryUploader = CloudinaryUploader()
 
     private fun getDatabase(context: Context): AppDatabase {
         return database ?: synchronized(this) {
@@ -42,7 +45,9 @@ object ServiceLocator {
             firestore = FirebaseFirestore.getInstance(),
             auth = FirebaseAuth.getInstance(),
             postDao = postDao,
-            imageCacheManager = ImageCacheManager(context.applicationContext, postDao)
+            userDao = database.appUserDao(),
+            imageCacheManager = ImageCacheManager(context.applicationContext, postDao),
+            cloudinaryUploader = cloudinaryUploader
         )
     }
 }

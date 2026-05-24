@@ -6,7 +6,6 @@ import android.net.Uri
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
-import android.util.Base64
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -102,13 +101,7 @@ class EditPostFragment : Fragment() {
         if (existingImageUrl.isNotBlank()) {
             binding.llPhotoPlaceholder.visibility = View.GONE
             binding.ivPhotoPreview.visibility = View.VISIBLE
-            if (existingImageUrl.startsWith("data:image")) {
-                val b64 = existingImageUrl.substringAfter(",")
-                val bytes = Base64.decode(b64, Base64.NO_WRAP)
-                binding.ivPhotoPreview.setImageBitmap(BitmapFactory.decodeByteArray(bytes, 0, bytes.size))
-            } else {
-                Picasso.get().load(existingImageUrl).fit().centerCrop().into(binding.ivPhotoPreview)
-            }
+            Picasso.get().load(existingImageUrl).fit().centerCrop().into(binding.ivPhotoPreview)
         }
 
         val defaultChipIds = setOf(R.id.chipAdventure, R.id.chipFood, R.id.chipRelaxation, R.id.chipCulture)
@@ -338,9 +331,7 @@ class EditPostFragment : Fragment() {
         viewModel.saveSuccess.observe(viewLifecycleOwner) { success ->
             if (!success) return@observe
             viewModel.resetSaveSuccess()
-            val newImageUrl = compressedImageBytes?.let {
-                "data:image/jpeg;base64," + Base64.encodeToString(it, Base64.NO_WRAP)
-            } ?: existingImageUrl
+            val newImageUrl = viewModel.savedImageUrl.value ?: existingImageUrl
             setFragmentResult(
                 RESULT_KEY,
                 bundleOf(

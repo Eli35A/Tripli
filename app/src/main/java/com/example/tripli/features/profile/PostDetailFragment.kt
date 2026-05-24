@@ -1,10 +1,8 @@
 package com.example.tripli.features.profile
 
-import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
-import android.util.Base64
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -72,11 +70,6 @@ class PostDetailFragment : Fragment() {
     }
 
     private fun bindImage(post: HomePost) {
-        if (post.imageUrl.startsWith("data:image")) {
-            val bytes = Base64.decode(post.imageUrl.substringAfter(","), Base64.NO_WRAP)
-            binding.postImageView.setImageBitmap(BitmapFactory.decodeByteArray(bytes, 0, bytes.size))
-            return
-        }
         val localFile = post.localImagePath?.let { File(it) }?.takeIf { it.exists() }
         val request = if (localFile != null)
             Picasso.get().load(localFile)

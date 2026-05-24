@@ -1,7 +1,8 @@
 package com.example.tripli.data.repository.posts
 
-import android.util.Base64
+import com.example.tripli.dao.AppUserDao
 import com.example.tripli.dao.HomePostDao
+import com.example.tripli.data.remote.CloudinaryUploader
 import com.example.tripli.dao.HomePostEntity
 import com.example.tripli.dao.ImageCacheManager
 import com.example.tripli.model.Comment
@@ -21,7 +22,9 @@ class HomePostRepository(
     private val firestore: FirebaseFirestore,
     private val auth: FirebaseAuth,
     private val postDao: HomePostDao,
-    private val imageCacheManager: ImageCacheManager
+    private val userDao: AppUserDao,
+    private val imageCacheManager: ImageCacheManager,
+    private val cloudinaryUploader: CloudinaryUploader
 ) {
 
     companion object {
@@ -257,15 +260,13 @@ class HomePostRepository(
     suspend fun createPost(imageBytes: ByteArray?, location: String, rating: Float, caption: String, hashtags: List<String>) {
         val user = auth.currentUser ?: error("Not authenticated")
 
-        val imageUrl = if (imageBytes != null) {
-            "data:image/jpeg;base64," + Base64.encodeToString(imageBytes, Base64.NO_WRAP)
-        } else ""
+        val imageUrl = if (imageBytes != null) cloudinaryUploader.upload(imageBytes) else ""
 
         firestore.collection(POSTS).add(
             mapOf(
                 "authorId" to user.uid,
                 "authorName" to (user.displayName ?: "Anonymous"),
-                "authorPhotoUrl" to (user.photoUrl?.toString() ?: ""),
+                "authorPhotoUrl" to (currentPhotoUrl() ?: ""),
                 "location" to location,
                 "title" to location,
                 "rating" to rating.toDouble(),
@@ -281,15 +282,31 @@ class HomePostRepository(
 
     fun getCurrentUserId(): String? = auth.currentUser?.uid
 
+    suspend fun updateAuthorPhotoOnPosts(authorId: String, photoUrl: String) {
+        val snapshot = firestore.collection(POSTS)
+            .whereEqualTo("authorId", authorId)
+            .get().await()
+        if (!snapshot.isEmpty) {
+            val batch = firestore.batch()
+            snapshot.documents.forEach { batch.update(it.reference, "authorPhotoUrl", photoUrl) }
+            batch.commit().await()
+        }
+        postDao.updateAuthorPhotoUrl(authorId, photoUrl)
+    }
+
+    private suspend fun currentPhotoUrl(): String? {
+        val uid = auth.currentUser?.uid ?: return null
+        return userDao.getUserById(uid)?.photoUrl
+            ?: auth.currentUser?.photoUrl?.toString()
+    }
+
     suspend fun deletePost(postId: String) {
         firestore.collection(POSTS).document(postId).delete().await()
         postDao.deleteById(postId)
     }
 
-    suspend fun updatePost(postId: String, imageBytes: ByteArray?, existingImageUrl: String, location: String, rating: Float, caption: String, hashtags: List<String>) {
-        val finalImageUrl = if (imageBytes != null)
-            "data:image/jpeg;base64," + Base64.encodeToString(imageBytes, Base64.NO_WRAP)
-        else existingImageUrl
+    suspend fun updatePost(postId: String, imageBytes: ByteArray?, existingImageUrl: String, location: String, rating: Float, caption: String, hashtags: List<String>): String {
+        val finalImageUrl = if (imageBytes != null) cloudinaryUploader.upload(imageBytes) else existingImageUrl
 
         val updates = mutableMapOf<String, Any>(
             "location" to location,
@@ -301,17 +318,19 @@ class HomePostRepository(
         if (imageBytes != null) updates["imageUrl"] = finalImageUrl
         firestore.collection(POSTS).document(postId).update(updates).await()
         postDao.updatePost(postId, location, rating, caption, hashtags.joinToString("|"), finalImageUrl)
+        return finalImageUrl
     }
 
     suspend fun addComment(postId: String, text: String): Comment {
         val user = auth.currentUser ?: error("Not authenticated")
+        val photoUrl = currentPhotoUrl()
         val postRef = firestore.collection(POSTS).document(postId)
         val commentRef = postRef.collection(COMMENTS).document()
         firestore.runTransaction { t ->
             t.set(commentRef, hashMapOf(
                 "authorId" to user.uid,
                 "authorName" to (user.displayName ?: "Anonymous"),
-                "authorPhotoUrl" to (user.photoUrl?.toString() ?: ""),
+                "authorPhotoUrl" to (photoUrl ?: ""),
                 "text" to text,
                 "createdAt" to FieldValue.serverTimestamp()
             ))
@@ -321,7 +340,7 @@ class HomePostRepository(
             id = commentRef.id,
             authorId = user.uid,
             userName = user.displayName ?: "Anonymous",
-            authorPhotoUrl = user.photoUrl?.toString()?.takeIf { it.isNotBlank() },
+            authorPhotoUrl = photoUrl?.takeIf { it.isNotBlank() },
             text = text,
             timeAgo = "Just now"
         )

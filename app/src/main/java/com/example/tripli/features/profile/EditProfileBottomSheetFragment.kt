@@ -39,8 +39,8 @@ class EditProfileBottomSheetFragment : BottomSheetDialogFragment() {
 
             val localFile = user.localPhotoPath?.let { File(it) }?.takeIf { it.exists() }
             when {
-                localFile != null -> Picasso.get().load(localFile).fit().centerCrop().into(binding.editPhotoPreview)
                 !user.photoUrl.isNullOrBlank() -> Picasso.get().load(user.photoUrl).fit().centerCrop().into(binding.editPhotoPreview)
+                localFile != null -> Picasso.get().load(localFile).fit().centerCrop().into(binding.editPhotoPreview)
             }
         }
 
