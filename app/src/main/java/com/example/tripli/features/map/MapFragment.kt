@@ -7,7 +7,6 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-import android.graphics.Path
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -135,31 +134,11 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     }
 
     private fun createPinDescriptor(): BitmapDescriptor {
-        val w = 90
-        val h = 120
-        val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        val size = 36
+        val bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bmp)
-        val pinColor = Color.parseColor("#FF8FAB")   // pastel pink-red body
-        val dotColor = Color.parseColor("#D64E6F")   // deeper rose for center dot
-        val cx = w / 2f
-        val r = w / 2f
-
-        val bodyPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = pinColor }
-        val path = Path().apply {
-            moveTo(cx, h.toFloat())
-            cubicTo(cx - w * 0.4f, h * 0.7f, 0f, h * 0.5f, 0f, r)
-            arcTo(0f, 0f, w.toFloat(), w.toFloat(), 180f, -180f, false)
-            cubicTo(w.toFloat(), h * 0.5f, cx + w * 0.4f, h * 0.7f, cx, h.toFloat())
-            close()
-        }
-        canvas.drawPath(path, bodyPaint)
-
-        // White circle
-        canvas.drawCircle(cx, r, w * 0.28f, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE })
-
-        // Rose dot in center
-        canvas.drawCircle(cx, r, w * 0.12f, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = dotColor })
-
+        val cx = size / 2f
+        canvas.drawCircle(cx, cx, cx, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.parseColor("#E8857A") })
         return BitmapDescriptorFactory.fromBitmap(bmp)
     }
 

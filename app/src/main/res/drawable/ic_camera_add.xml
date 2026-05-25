@@ -7,7 +7,7 @@
 
     <!-- Camera body with viewfinder bump -->
     <path
-        android:fillColor="#39C4E7"
+        android:fillColor="#3D6B45"
         android:pathData="M21,16 L18,20 H10 C7.8,20 6,21.8 6,24 V42 C6,44.2 7.8,46 10,46 H46 C48.2,46 50,44.2 50,42 V24 C50,21.8 48.2,20 46,20 H38 L35,16 Z" />
 
     <!-- Lens outer white ring -->
@@ -17,17 +17,17 @@
 
     <!-- Lens inner teal circle -->
     <path
-        android:fillColor="#39C4E7"
+        android:fillColor="#3D6B45"
         android:pathData="M28,33m-5.5,0a5.5,5.5 0,1 1,11 0a5.5,5.5 0,1 1,-11 0" />
 
     <!-- "+" at top-right (vertical bar) -->
     <path
-        android:fillColor="#39C4E7"
+        android:fillColor="#3D6B45"
         android:pathData="M43,6 L45,6 L45,16 L43,16 Z" />
 
     <!-- "+" at top-right (horizontal bar) -->
     <path
-        android:fillColor="#39C4E7"
+        android:fillColor="#3D6B45"
         android:pathData="M38,10 L50,10 L50,12 L38,12 Z" />
 
 </vector>

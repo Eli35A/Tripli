@@ -79,13 +79,26 @@ class HomePostRepository(
         return try {
             val snapshot = firestore.collection(POSTS)
                 .whereEqualTo("authorId", userId)
-                .orderBy("createdAt", Query.Direction.DESCENDING)
                 .get().await()
-            val posts = snapshot.documents.map { it.toHomePost() }
-            postDao.insertAll(snapshot.documents.map { it.toEntity() })
+            // Sort in memory to avoid requiring a composite Firestore index
+            val docs = snapshot.documents.sortedByDescending { it.getTimestamp("createdAt")?.seconds ?: 0L }
+            val posts = docs.map { it.toHomePost() }
+            postDao.insertAll(docs.map { it.toEntity() })
             posts.filter { imageCacheManager.localPathFor(it.id) == null }
                 .forEach { imageCacheManager.scheduleCache(it.id, it.imageUrl) }
             posts
+        } catch (e: Exception) {
+            cached
+        }
+    }
+
+    suspend fun getAllPostsForMap(): List<HomePost> {
+        val cached = postDao.getAll().map { it.toModel() }
+        return try {
+            val snapshot = firestore.collection(POSTS)
+                .orderBy("createdAt", Query.Direction.DESCENDING)
+                .get().await()
+            snapshot.documents.map { it.toHomePost() }
         } catch (e: Exception) {
             cached
         }
