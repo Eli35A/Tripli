@@ -1,9 +1,14 @@
 package com.example.tripli.features.profile
 
+import android.app.Dialog
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.Window
+import android.widget.ImageView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
@@ -48,6 +53,8 @@ class ProfileFragment : Fragment() {
 
         binding.logoutButton.setOnClickListener { viewModel.signOut() }
 
+        binding.profileImageCard.setOnClickListener { expandProfilePhoto() }
+
         viewModel.loggedOut.observe(viewLifecycleOwner) { loggedOut ->
             if (loggedOut) findNavController().navigate(R.id.action_profileFragment_to_loginFragment)
         }
@@ -62,11 +69,6 @@ class ProfileFragment : Fragment() {
         TabLayoutMediator(binding.profileTabLayout, binding.profileViewPager) { tab, position ->
             tab.text = if (position == 0) "My Posts" else "Liked Posts"
         }.attach()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        viewModel.refreshAll()
     }
 
     private fun observeViewModel() {
@@ -91,6 +93,34 @@ class ProfileFragment : Fragment() {
         viewModel.isLoadingProfile.observe(viewLifecycleOwner) { loading ->
             binding.profileLoadingIndicator.visibility = if (loading) View.VISIBLE else View.GONE
         }
+    }
+
+    private fun expandProfilePhoto() {
+        val user = viewModel.user.value ?: return
+        val dialog = Dialog(requireContext())
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        dialog.window?.apply {
+            setBackgroundDrawable(ColorDrawable(Color.BLACK))
+            setLayout(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+        }
+        val imageView = ImageView(requireContext()).apply {
+            scaleType = ImageView.ScaleType.FIT_CENTER
+            setOnClickListener { dialog.dismiss() }
+        }
+        val localFile = user.localPhotoPath?.let { File(it) }?.takeIf { it.exists() }
+        when {
+            !user.photoUrl.isNullOrBlank() ->
+                Picasso.get().load(user.photoUrl).placeholder(R.drawable.ic_profile_placeholder).into(imageView)
+            localFile != null ->
+                Picasso.get().load(localFile).placeholder(R.drawable.ic_profile_placeholder).into(imageView)
+            else ->
+                imageView.setImageResource(R.drawable.ic_profile_placeholder)
+        }
+        dialog.setContentView(imageView)
+        dialog.show()
     }
 
     override fun onDestroyView() {

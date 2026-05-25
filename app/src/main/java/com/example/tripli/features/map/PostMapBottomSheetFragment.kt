@@ -1,12 +1,16 @@
 package com.example.tripli.features.map
 
+import android.content.res.ColorStateList
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
+import com.example.tripli.R
 import com.example.tripli.model.HomePost
 import com.example.tripli.databinding.FragmentPostMapSheetBinding
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.google.android.material.shape.MaterialShapeDrawable
 import com.squareup.picasso.Picasso
 
 class PostMapBottomSheetFragment : BottomSheetDialogFragment() {
@@ -50,6 +54,20 @@ class PostMapBottomSheetFragment : BottomSheetDialogFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        // Recolor the Material bottom sheet container (rounded corners + background)
+        val container = dialog?.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
+        val bg = container?.background
+        if (bg is MaterialShapeDrawable) {
+            bg.fillColor = ColorStateList.valueOf(
+                ContextCompat.getColor(requireContext(), R.color.screenBackground)
+            )
+        } else {
+            container?.setBackgroundColor(
+                ContextCompat.getColor(requireContext(), R.color.screenBackground)
+            )
+        }
+
         val args = requireArguments()
 
         binding.sheetTitle.text = args.getString(ARG_TITLE)
